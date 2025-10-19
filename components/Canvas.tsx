@@ -18,7 +18,7 @@ export function Canvas({ canvasElements, onCombine }: CanvasProps) {
     <div
       ref={setNodeRef}
       data-canvas
-      className="relative w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg overflow-hidden"
+      className="relative w-full h-full bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg overflow-auto"
     >
       {canvasElements.map((canvasEl) => (
         <CanvasElementCard

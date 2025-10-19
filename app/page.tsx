@@ -17,6 +17,7 @@ import {
   saveDiscoveries,
   loadCanvasElements,
   saveCanvasElements,
+  clearCanvasElements,
 } from '@/lib/storage';
 import { Canvas } from '@/components/Canvas';
 import { Sidebar } from '@/components/Sidebar';
@@ -118,6 +119,59 @@ export default function Home() {
         await handleCombine(element1.id, element2.id);
       }
     }
+
+    // Case 3: Dragging from sidebar directly onto a canvas element (combine)
+    if (activeData?.source === 'sidebar' && overData?.element) {
+      const sidebarElement = activeData.element;
+      const canvasElement = overData.element;
+
+      console.log('Combining sidebar element with canvas element:', sidebarElement.name, '+', canvasElement.name);
+
+      // First, temporarily add sidebar element to canvas at the target position
+      const targetCanvas = canvasElements.find((ce) => ce.element.id === canvasElement.id);
+      if (targetCanvas) {
+        // Add the sidebar element temporarily
+        const tempCanvasElement: CanvasElementType = {
+          element: sidebarElement,
+          position: targetCanvas.position,
+        };
+        const tempCanvas = [...canvasElements, tempCanvasElement];
+        setCanvasElements(tempCanvas);
+
+        // Now combine them (this will remove both and add the result)
+        await handleCombine(sidebarElement.id, canvasElement.id);
+      }
+    }
+
+    // Case 4: Moving a canvas element to a new position
+    if (activeData?.source === 'canvas' && over.id === 'canvas' && !overData?.element) {
+      const element = activeData.element;
+
+      // Get canvas container to calculate relative position
+      const canvasEl = document.querySelector('[data-canvas]');
+      if (!canvasEl) {
+        console.error('Canvas element not found');
+        return;
+      }
+
+      const rect = canvasEl.getBoundingClientRect();
+      const newPosition = {
+        x: Math.max(0, active.rect.current.translated?.left || 0) - rect.left,
+        y: Math.max(0, active.rect.current.translated?.top || 0) - rect.top,
+      };
+
+      console.log('Moving canvas element:', element.name, 'to', newPosition);
+
+      // Update the position of this element
+      const updatedCanvas = canvasElements.map((ce) =>
+        ce.element.id === element.id
+          ? { ...ce, position: newPosition }
+          : ce
+      );
+
+      setCanvasElements(updatedCanvas);
+      saveCanvasElements(updatedCanvas);
+    }
   };
 
   const handleCombine = async (elementId1: string, elementId2: string) => {
@@ -156,20 +210,24 @@ export default function Home() {
         setAllElements([...BASE_ELEMENTS, ...updatedDiscoveries]);
         saveDiscoveries(updatedDiscoveries);
 
-        // Add to canvas near the parent elements
+        // Replace parent elements with the new combined element on canvas
         const el1Canvas = canvasElements.find((ce) => ce.element.id === elementId1);
         const el2Canvas = canvasElements.find((ce) => ce.element.id === elementId2);
 
-        if (el1Canvas) {
+        // Remove both parent elements from canvas and add new element at el1's position
+        if (el1Canvas || el2Canvas) {
+          const position = el1Canvas ? el1Canvas.position : el2Canvas!.position;
+
           const newCanvasElement: CanvasElementType = {
             element: newElement,
-            position: {
-              x: el1Canvas.position.x + 150,
-              y: el1Canvas.position.y + 50,
-            },
+            position,
           };
 
-          const updatedCanvas = [...canvasElements, newCanvasElement];
+          // Filter out parent elements and add the new combined element
+          const updatedCanvas = canvasElements
+            .filter((ce) => ce.element.id !== elementId1 && ce.element.id !== elementId2)
+            .concat(newCanvasElement);
+
           setCanvasElements(updatedCanvas);
           saveCanvasElements(updatedCanvas);
         }
@@ -181,6 +239,11 @@ export default function Home() {
     }
   };
 
+  const handleClearCanvas = () => {
+    setCanvasElements([]);
+    clearCanvasElements();
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -190,11 +253,19 @@ export default function Home() {
       <div className="flex h-screen overflow-hidden">
         {/* Main Canvas Area */}
         <div className="flex-1 flex flex-col">
-          <header className="bg-white border-b border-gray-200 px-6 py-4">
-            <h1 className="text-3xl font-bold text-gray-900">Anything Goes</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Drag elements to combine and discover new story possibilities
-            </p>
+          <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Anything Goes</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Drag elements to combine and discover new story possibilities
+              </p>
+            </div>
+            <button
+              onClick={handleClearCanvas}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+            >
+              Clear Canvas
+            </button>
           </header>
 
           <div className="flex-1 p-6">
