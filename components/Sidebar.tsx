@@ -9,6 +9,7 @@ interface SidebarProps {
   discoveries: Element[];
   onResetDiscoveries: () => void;
   onCreateElement: (name: string) => void;
+  onInspectElement: (elementId: string) => void;
 }
 
 // Shuffle array using Fisher-Yates algorithm
@@ -21,7 +22,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement }: SidebarProps) {
+export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, onInspectElement }: SidebarProps) {
   const [selectedSystems, setSelectedSystems] = useState<Set<SystemType>>(
     new Set(Object.keys(SYSTEM_NAMES) as SystemType[])
   );
@@ -43,13 +44,22 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
     setSelectedSystems(newSelected);
   };
 
+  // Get only systems that have elements
+  const availableSystems = useMemo(() => {
+    const systems = new Set<SystemType>();
+    allElements.forEach((el) => systems.add(el.system));
+    return Array.from(systems).sort((a, b) =>
+      SYSTEM_NAMES[a].localeCompare(SYSTEM_NAMES[b])
+    );
+  }, [allElements]);
+
   const toggleAll = () => {
-    if (selectedSystems.size === Object.keys(SYSTEM_NAMES).length) {
-      // All selected, clear all
+    if (selectedSystems.size === availableSystems.length) {
+      // All available systems selected, clear all
       setSelectedSystems(new Set());
     } else {
-      // Select all
-      setSelectedSystems(new Set(Object.keys(SYSTEM_NAMES) as SystemType[]));
+      // Select all available systems
+      setSelectedSystems(new Set(availableSystems));
     }
   };
 
@@ -87,7 +97,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
               onClick={toggleAll}
               className={`
                 inline-flex px-2 py-1 rounded-lg border-2 text-xs font-medium transition-all
-                ${selectedSystems.size === Object.keys(SYSTEM_NAMES).length
+                ${selectedSystems.size === availableSystems.length
                   ? 'bg-gray-600 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
                 }
@@ -95,7 +105,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
             >
               All
             </button>
-            {(Object.keys(SYSTEM_NAMES) as SystemType[]).map((system) => {
+            {availableSystems.map((system) => {
               const isSelected = selectedSystems.has(system);
               const color = SYSTEM_COLORS[system];
               return (
@@ -143,13 +153,13 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
               onClick={() => onCreateElement(searchQuery.trim())}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors text-sm"
             >
-              Create "{searchQuery.trim()}"
+              Create &quot;{searchQuery.trim()}&quot;
             </button>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
             {filteredElements.map((element) => (
-              <SidebarElement key={element.id} element={element} />
+              <SidebarElement key={element.id} element={element} onInspect={onInspectElement} />
             ))}
           </div>
         )}

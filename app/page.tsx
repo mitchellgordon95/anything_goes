@@ -10,7 +10,7 @@ import {
   useSensors,
   PointerSensor,
 } from '@dnd-kit/core';
-import { Element, CanvasElement as CanvasElementType, ConcreteElementType } from '@/lib/types';
+import { Element, CanvasElement as CanvasElementType, SystemType } from '@/lib/types';
 import { BASE_ELEMENTS } from '@/lib/baseElements';
 import {
   loadDiscoveries,
@@ -22,7 +22,8 @@ import {
 import { Canvas } from '@/components/Canvas';
 import { Sidebar } from '@/components/Sidebar';
 import { CustomElementModal } from '@/components/CustomElementModal';
-import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName, SystemType } from '@/lib/types';
+import { ElementInspector } from '@/components/ElementInspector';
+import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName } from '@/lib/types';
 
 export default function Home() {
   const [discoveries, setDiscoveries] = useState<Element[]>([]);
@@ -35,6 +36,7 @@ export default function Home() {
   const [rejectedNames, setRejectedNames] = useState<string[]>([]);
   const [crystallizationElements, setCrystallizationElements] = useState<Element[]>([]);
   const [customElementName, setCustomElementName] = useState<string | null>(null);
+  const [inspectedElement, setInspectedElement] = useState<Element | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -229,8 +231,21 @@ export default function Home() {
 
     if (!el1 || !el2) return;
 
-    // Block combining crystallized elements
-    if (el1.concreteType || el2.concreteType) {
+    // Block combining crystallized elements (elements with concrete system types)
+    const concreteTypes: SystemType[] = [
+      'character',
+      'location',
+      'scene',
+      'beat',
+      'object',
+      'relationship',
+      'event',
+      'theme',
+    ];
+    const isEl1Concrete = concreteTypes.includes(el1.system);
+    const isEl2Concrete = concreteTypes.includes(el2.system);
+
+    if (isEl1Concrete || isEl2Concrete) {
       alert('Combining crystallized elements is not yet supported. Stay tuned for future updates!');
       return;
     }
@@ -402,7 +417,7 @@ export default function Home() {
     );
   };
 
-  const handleCrystallize = async (type: ConcreteElementType) => {
+  const handleCrystallize = async (type: SystemType) => {
     if (crystallizationElements.length < 1) {
       console.error('Need at least 1 element to crystallize');
       return;
@@ -431,8 +446,7 @@ export default function Home() {
           id: `crystallized-${Date.now()}`,
           name: data.name,
           description: data.description,
-          system: crystallizationElements[0].system, // Use first element's system
-          concreteType: type,
+          system: type, // Set system to the concrete type selected
           discoveredAt: new Date().toISOString(),
         };
 
@@ -536,6 +550,17 @@ export default function Home() {
     setCustomElementName(null);
   };
 
+  const handleInspectElement = (elementId: string) => {
+    const element = allElements.find((e) => e.id === elementId);
+    if (element) {
+      setInspectedElement(element);
+    }
+  };
+
+  const handleCloseInspector = () => {
+    setInspectedElement(null);
+  };
+
   // Render basic UI without DnD during SSR/hydration
   if (!isMounted) {
     return (
@@ -565,6 +590,7 @@ export default function Home() {
               crystallizationElements={crystallizationElements}
               onCrystallize={handleCrystallize}
               onRemoveFromCrystallization={handleRemoveFromCrystallization}
+              onInspectElement={handleInspectElement}
             />
           </div>
         </div>
@@ -574,6 +600,7 @@ export default function Home() {
           discoveries={discoveries}
           onResetDiscoveries={handleResetDiscoveries}
           onCreateElement={handleCreateElement}
+          onInspectElement={handleInspectElement}
         />
 
         {customElementName && (
@@ -581,6 +608,14 @@ export default function Home() {
             initialName={customElementName}
             onSave={handleSaveCustomElement}
             onCancel={handleCancelCustomElement}
+          />
+        )}
+
+        {inspectedElement && (
+          <ElementInspector
+            element={inspectedElement}
+            allElements={allElements}
+            onClose={handleCloseInspector}
           />
         )}
       </div>
@@ -620,6 +655,7 @@ export default function Home() {
               crystallizationElements={crystallizationElements}
               onCrystallize={handleCrystallize}
               onRemoveFromCrystallization={handleRemoveFromCrystallization}
+              onInspectElement={handleInspectElement}
             />
           </div>
 
@@ -636,6 +672,7 @@ export default function Home() {
           discoveries={discoveries}
           onResetDiscoveries={handleResetDiscoveries}
           onCreateElement={handleCreateElement}
+          onInspectElement={handleInspectElement}
         />
       </div>
 
@@ -644,6 +681,14 @@ export default function Home() {
           initialName={customElementName}
           onSave={handleSaveCustomElement}
           onCancel={handleCancelCustomElement}
+        />
+      )}
+
+      {inspectedElement && (
+        <ElementInspector
+          element={inspectedElement}
+          allElements={allElements}
+          onClose={handleCloseInspector}
         />
       )}
 

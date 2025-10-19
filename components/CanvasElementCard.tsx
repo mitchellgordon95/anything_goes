@@ -9,13 +9,15 @@ interface CanvasElementCardProps {
   onCombine: (elementId1: string, elementId2: string) => void;
   isRerollable: boolean;
   onReroll: (elementId: string) => void;
+  onInspect: (elementId: string) => void;
 }
 
 export function CanvasElementCard({
   canvasElement,
-  onCombine,
+  onCombine, // eslint-disable-line @typescript-eslint/no-unused-vars
   isRerollable,
   onReroll,
+  onInspect,
 }: CanvasElementCardProps) {
   const { element, position } = canvasElement;
 
@@ -68,15 +70,15 @@ export function CanvasElementCard({
           ↻
         </button>
       )}
-      <div className="flex items-center gap-2">
-        <div className="font-medium text-gray-900 text-sm whitespace-nowrap">
-          {element.name}
-        </div>
-        {element.concreteType && (
-          <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
-            {element.concreteType}
-          </span>
-        )}
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          onInspect(element.id);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="font-medium text-gray-900 text-sm whitespace-nowrap cursor-pointer hover:text-purple-600 transition-colors"
+      >
+        {element.name}
       </div>
     </div>
   );

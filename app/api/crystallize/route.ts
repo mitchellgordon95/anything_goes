@@ -67,7 +67,6 @@ The description should be specific and concrete, like describing a real person/p
     const { text } = await generateText({
       model: anthropic('claude-sonnet-4-20250514'),
       prompt,
-      maxTokens: 200,
       temperature: 0.9,
     });
 

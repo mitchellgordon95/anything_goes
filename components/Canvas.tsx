@@ -1,7 +1,7 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
-import { CanvasElement, Element, ConcreteElementType } from '@/lib/types';
+import { CanvasElement, Element, SystemType } from '@/lib/types';
 import { CanvasElementCard } from './CanvasElementCard';
 import { CrystallizationZone } from './CrystallizationZone';
 
@@ -11,8 +11,9 @@ interface CanvasProps {
   rerollableElementId: string | null;
   onReroll: (elementId: string) => void;
   crystallizationElements: Element[];
-  onCrystallize: (type: ConcreteElementType) => void;
+  onCrystallize: (type: SystemType) => void;
   onRemoveFromCrystallization: (elementId: string) => void;
+  onInspectElement: (elementId: string) => void;
 }
 
 export function Canvas({
@@ -22,7 +23,8 @@ export function Canvas({
   onReroll,
   crystallizationElements,
   onCrystallize,
-  onRemoveFromCrystallization
+  onRemoveFromCrystallization,
+  onInspectElement
 }: CanvasProps) {
   const { setNodeRef } = useDroppable({
     id: 'canvas',
@@ -42,6 +44,7 @@ export function Canvas({
             onCombine={onCombine}
             isRerollable={canvasEl.element.id === rerollableElementId}
             onReroll={onReroll}
+            onInspect={onInspectElement}
           />
         ))}
 

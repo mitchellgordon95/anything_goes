@@ -38,7 +38,6 @@ Respond with ONLY the description text, nothing else.`;
     const { text } = await generateText({
       model: anthropic('claude-sonnet-4-20250514'),
       prompt,
-      maxTokens: 100,
       temperature: 0.8,
     });
 

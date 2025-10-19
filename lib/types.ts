@@ -1,13 +1,3 @@
-export type ConcreteElementType =
-  | 'Character'
-  | 'Location'
-  | 'Scene'
-  | 'Beat'
-  | 'Object'
-  | 'Relationship'
-  | 'Event'
-  | 'Theme';
-
 export interface Element {
   id: string;
   name: string;
@@ -15,7 +5,6 @@ export interface Element {
   description?: string;
   parents?: [string, string]; // IDs of elements that created this
   discoveredAt?: string; // ISO timestamp
-  concreteType?: ConcreteElementType; // Set when element is crystallized
 }
 
 export interface Combination {
@@ -31,7 +20,15 @@ export type SystemType =
   | 'characteristics'
   | 'tropes'
   | 'sensory'
-  | 'momentum';
+  | 'momentum'
+  | 'character'
+  | 'location'
+  | 'scene'
+  | 'beat'
+  | 'object'
+  | 'relationship'
+  | 'event'
+  | 'theme';
 
 export const SYSTEM_NAMES: Record<SystemType, string> = {
   'emotions': 'Emotions',
@@ -40,6 +37,14 @@ export const SYSTEM_NAMES: Record<SystemType, string> = {
   'tropes': 'Tropes',
   'sensory': 'Sensory',
   'momentum': 'Momentum',
+  'character': 'Character',
+  'location': 'Location',
+  'scene': 'Scene',
+  'beat': 'Beat',
+  'object': 'Object',
+  'relationship': 'Relationship',
+  'event': 'Event',
+  'theme': 'Theme',
 };
 
 export const SYSTEM_COLORS: Record<SystemType, string> = {
@@ -49,6 +54,14 @@ export const SYSTEM_COLORS: Record<SystemType, string> = {
   'tropes': '#f59e0b', // Amber/Gold
   'sensory': '#10b981', // Emerald/Green
   'momentum': '#f97316', // Orange/Red
+  'character': '#a855f7', // Purple
+  'location': '#10b981', // Green
+  'scene': '#06b6d4', // Cyan
+  'beat': '#f97316', // Orange
+  'object': '#059669', // Emerald
+  'relationship': '#ec4899', // Pink
+  'event': '#f59e0b', // Amber
+  'theme': '#6b7280', // Gray
 };
 
 export interface Position {
@@ -64,7 +77,8 @@ export interface CanvasElement {
 // Helper to convert from display name to system type
 export function getSystemTypeFromName(name: string): SystemType | undefined {
   const entry = Object.entries(SYSTEM_NAMES).find(
-    ([_, displayName]) => displayName === name
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ([_key, displayName]) => displayName === name
   );
   return entry ? (entry[0] as SystemType) : undefined;
 }

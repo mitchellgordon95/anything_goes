@@ -5,9 +5,10 @@ import { Element, SYSTEM_COLORS } from '@/lib/types';
 
 interface SidebarElementProps {
   element: Element;
+  onInspect: (elementId: string) => void;
 }
 
-export function SidebarElement({ element }: SidebarElementProps) {
+export function SidebarElement({ element, onInspect }: SidebarElementProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `sidebar-${element.id}`,
     data: { element, source: 'sidebar' },
@@ -28,13 +29,15 @@ export function SidebarElement({ element }: SidebarElementProps) {
         ${isDragging ? 'opacity-50' : ''}
       `}
     >
-      <div className="flex items-center gap-1.5">
-        <div className="font-medium text-gray-900 text-sm">{element.name}</div>
-        {element.concreteType && (
-          <span className="px-1.5 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
-            {element.concreteType}
-          </span>
-        )}
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          onInspect(element.id);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        className="font-medium text-gray-900 text-sm cursor-pointer hover:text-purple-600 transition-colors"
+      >
+        {element.name}
       </div>
     </div>
   );

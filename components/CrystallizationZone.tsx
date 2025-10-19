@@ -1,24 +1,24 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
-import { Element, ConcreteElementType, SYSTEM_COLORS } from '@/lib/types';
+import { Element, SystemType, SYSTEM_COLORS, SYSTEM_NAMES } from '@/lib/types';
 import { useState } from 'react';
 
 interface CrystallizationZoneProps {
   elementsInZone: Element[];
-  onCrystallize: (type: ConcreteElementType) => void;
+  onCrystallize: (type: SystemType) => void;
   onRemoveFromZone: (elementId: string) => void;
 }
 
-const CONCRETE_TYPES: ConcreteElementType[] = [
-  'Character',
-  'Location',
-  'Scene',
-  'Beat',
-  'Object',
-  'Relationship',
-  'Event',
-  'Theme',
+const CONCRETE_TYPES: SystemType[] = [
+  'character',
+  'location',
+  'scene',
+  'beat',
+  'object',
+  'relationship',
+  'event',
+  'theme',
 ];
 
 export function CrystallizationZone({
@@ -38,7 +38,7 @@ export function CrystallizationZone({
     setShowTypeSelector(true);
   };
 
-  const handleTypeSelect = (type: ConcreteElementType) => {
+  const handleTypeSelect = (type: SystemType) => {
     onCrystallize(type);
     setShowTypeSelector(false);
   };
@@ -112,7 +112,7 @@ export function CrystallizationZone({
                   onClick={() => handleTypeSelect(type)}
                   className="px-4 py-3 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-lg font-medium transition-colors text-sm"
                 >
-                  {type}
+                  {SYSTEM_NAMES[type]}
                 </button>
               ))}
             </div>

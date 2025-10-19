@@ -75,7 +75,6 @@ Use exactly one of the two system names listed above. Keep the description conci
     const { text } = await generateText({
       model: anthropic('claude-sonnet-4-20250514'),
       prompt,
-      maxTokens: 150,
       temperature: 0.8,
     });
 
