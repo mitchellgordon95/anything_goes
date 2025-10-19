@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Element, SystemType, SYSTEM_NAMES } from '@/lib/types';
+import { Element, SystemType, SYSTEM_NAMES, SYSTEM_COLORS } from '@/lib/types';
 import { SidebarElement } from './SidebarElement';
 
 interface SidebarProps {
@@ -22,7 +22,9 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement }: SidebarProps) {
-  const [filter, setFilter] = useState<SystemType | 'all'>('all');
+  const [selectedSystems, setSelectedSystems] = useState<Set<SystemType>>(
+    new Set(Object.keys(SYSTEM_NAMES) as SystemType[])
+  );
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -31,11 +33,28 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
     setIsMounted(true);
   }, []);
 
+  const toggleSystem = (system: SystemType) => {
+    const newSelected = new Set(selectedSystems);
+    if (newSelected.has(system)) {
+      newSelected.delete(system);
+    } else {
+      newSelected.add(system);
+    }
+    setSelectedSystems(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (selectedSystems.size === Object.keys(SYSTEM_NAMES).length) {
+      // All selected, clear all
+      setSelectedSystems(new Set());
+    } else {
+      // Select all
+      setSelectedSystems(new Set(Object.keys(SYSTEM_NAMES) as SystemType[]));
+    }
+  };
+
   const filteredElements = useMemo(() => {
-    let filtered =
-      filter === 'all'
-        ? allElements
-        : allElements.filter((el) => el.system === filter);
+    let filtered = allElements.filter((el) => selectedSystems.has(el.system));
 
     // Apply search filter
     if (searchQuery.trim()) {
@@ -46,7 +65,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
 
     // Only shuffle on client after mount to avoid hydration mismatch
     return isMounted ? shuffleArray(filtered) : filtered;
-  }, [allElements, filter, isMounted, searchQuery]);
+  }, [allElements, selectedSystems, isMounted, searchQuery]);
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-screen">
@@ -61,24 +80,46 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-2"
         />
 
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value as SystemType | 'all')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="all">All Systems ({allElements.length})</option>
-          {(Object.keys(SYSTEM_NAMES) as SystemType[]).map((system) => {
-            const count = allElements.filter((el) => el.system === system).length;
-            return (
-              <option key={system} value={system}>
-                {SYSTEM_NAMES[system]} ({count})
-              </option>
-            );
-          })}
-        </select>
+        <div className="mb-2">
+          <div className="text-xs font-medium text-gray-600 mb-2">Filter by System</div>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={toggleAll}
+              className={`
+                inline-flex px-2 py-1 rounded-lg border-2 text-xs font-medium transition-all
+                ${selectedSystems.size === Object.keys(SYSTEM_NAMES).length
+                  ? 'bg-gray-600 border-gray-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                }
+              `}
+            >
+              All
+            </button>
+            {(Object.keys(SYSTEM_NAMES) as SystemType[]).map((system) => {
+              const isSelected = selectedSystems.has(system);
+              const color = SYSTEM_COLORS[system];
+              return (
+                <button
+                  key={system}
+                  onClick={() => toggleSystem(system)}
+                  style={{
+                    borderColor: color,
+                    backgroundColor: isSelected ? color : 'white',
+                    color: isSelected ? 'white' : color,
+                  }}
+                  className="inline-flex px-2 py-1 rounded-lg border-2 text-xs font-medium transition-all hover:shadow-md"
+                >
+                  {SYSTEM_NAMES[system]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
-          <span>{discoveries.length} discovered</span>
+          <span>
+            {filteredElements.length} showing · {discoveries.length} discovered
+          </span>
           {discoveries.length > 0 && (
             <button
               onClick={() => {

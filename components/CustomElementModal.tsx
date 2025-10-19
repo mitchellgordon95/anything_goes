@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SystemType, SYSTEM_NAMES } from '@/lib/types';
+import { SystemType, SYSTEM_NAMES, SYSTEM_COLORS } from '@/lib/types';
 
 interface CustomElementModalProps {
   initialName: string;
@@ -113,22 +113,32 @@ export function CustomElementModal({
             </p>
           </div>
 
-          {/* System Dropdown */}
+          {/* System Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               System
             </label>
-            <select
-              value={system}
-              onChange={(e) => setSystem(e.target.value as SystemType)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              {(Object.keys(SYSTEM_NAMES) as SystemType[]).map((sys) => (
-                <option key={sys} value={sys}>
-                  {SYSTEM_NAMES[sys]}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(SYSTEM_NAMES) as SystemType[]).map((sys) => {
+                const isSelected = system === sys;
+                const color = SYSTEM_COLORS[sys];
+                return (
+                  <button
+                    key={sys}
+                    type="button"
+                    onClick={() => setSystem(sys)}
+                    style={{
+                      borderColor: color,
+                      backgroundColor: isSelected ? color : 'white',
+                      color: isSelected ? 'white' : color,
+                    }}
+                    className="inline-flex px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all hover:shadow-md"
+                  >
+                    {SYSTEM_NAMES[sys]}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Description Textarea */}
