@@ -24,10 +24,10 @@ A story-writing app inspired by Infinite Craft where users discover story elemen
    npm install
    ```
 
-2. **Set up your OpenAI API key:**
+2. **Set up your Anthropic API key:**
    - Copy `.env.example` to `.env.local`
-   - Add your OpenAI API key to `.env.local`
-   - Get an API key at: https://platform.openai.com/api-keys
+   - Add your Anthropic API key to `.env.local`
+   - Get an API key at: https://console.anthropic.com/
 
 3. **Run the development server:**
    ```bash
@@ -57,7 +57,7 @@ A story-writing app inspired by Infinite Craft where users discover story elemen
 - **Framework**: Next.js 14 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **AI**: Vercel AI SDK with OpenAI
+- **AI**: Vercel AI SDK with Anthropic Claude
 - **Deployment**: Ready for Vercel
 
 ## Development

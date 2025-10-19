@@ -1,8 +1,6 @@
-import { openai } from '@ai-sdk/openai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
-
-export const runtime = 'edge';
 
 interface CombineRequest {
   element1: {
@@ -47,8 +45,17 @@ Create a 2-4 word name that captures this synthesis.
 Be creative - even unusual combinations can create something meaningful.
 Only respond with the name, nothing else.`;
 
+    // Log the prompt for inspection
+    console.log('=== COMBINATION REQUEST ===');
+    console.log('Element 1:', element1.name, `(${element1.system})`);
+    console.log('Element 2:', element2.name, `(${element2.system})`);
+    console.log('Same system:', isSameSystem);
+    console.log('\n=== PROMPT ===');
+    console.log(prompt);
+    console.log('================\n');
+
     const { text } = await generateText({
-      model: openai('gpt-4o-mini'),
+      model: anthropic('claude-3-5-haiku-20241022'),
       prompt,
       maxTokens: 50,
       temperature: 0.8,
@@ -56,6 +63,12 @@ Only respond with the name, nothing else.`;
 
     // Clean up the response
     const resultName = text.trim().replace(/^["']|["']$/g, '');
+
+    // Log the response
+    console.log('=== RESPONSE ===');
+    console.log('Raw:', text);
+    console.log('Cleaned:', resultName);
+    console.log('================\n');
 
     return NextResponse.json({
       name: resultName,
