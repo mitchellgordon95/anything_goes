@@ -26,29 +26,29 @@ export interface Combination {
 }
 
 export type SystemType =
-  | 'emotional-chemistry'
+  | 'emotions'
   | 'story-particles'
-  | 'character-fusion'
-  | 'trope-alchemy'
-  | 'sensory-worldbuilding'
-  | 'momentum-engine';
+  | 'characteristics'
+  | 'tropes'
+  | 'sensory'
+  | 'momentum';
 
 export const SYSTEM_NAMES: Record<SystemType, string> = {
-  'emotional-chemistry': 'Emotional Chemistry',
+  'emotions': 'Emotions',
   'story-particles': 'Story Particles',
-  'character-fusion': 'Character Fusion',
-  'trope-alchemy': 'Trope Alchemy',
-  'sensory-worldbuilding': 'Sensory World Building',
-  'momentum-engine': 'Momentum Engine',
+  'characteristics': 'Characteristics',
+  'tropes': 'Tropes',
+  'sensory': 'Sensory',
+  'momentum': 'Momentum',
 };
 
 export const SYSTEM_COLORS: Record<SystemType, string> = {
-  'emotional-chemistry': '#ec4899', // Pink/Rose
+  'emotions': '#ec4899', // Pink/Rose
   'story-particles': '#06b6d4', // Cyan/Teal
-  'character-fusion': '#a855f7', // Purple
-  'trope-alchemy': '#f59e0b', // Amber/Gold
-  'sensory-worldbuilding': '#10b981', // Emerald/Green
-  'momentum-engine': '#f97316', // Orange/Red
+  'characteristics': '#a855f7', // Purple
+  'tropes': '#f59e0b', // Amber/Gold
+  'sensory': '#10b981', // Emerald/Green
+  'momentum': '#f97316', // Orange/Red
 };
 
 export interface Position {
