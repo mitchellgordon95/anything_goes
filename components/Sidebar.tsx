@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Element, SystemType, SYSTEM_NAMES } from '@/lib/types';
 import { SidebarElement } from './SidebarElement';
 
@@ -21,6 +21,12 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export function Sidebar({ allElements, discoveries }: SidebarProps) {
   const [filter, setFilter] = useState<SystemType | 'all'>('all');
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Only shuffle after client-side hydration to avoid mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const filteredElements = useMemo(() => {
     const filtered =
@@ -28,8 +34,9 @@ export function Sidebar({ allElements, discoveries }: SidebarProps) {
         ? allElements
         : allElements.filter((el) => el.system === filter);
 
-    return shuffleArray(filtered);
-  }, [allElements, filter]);
+    // Only shuffle on client after mount to avoid hydration mismatch
+    return isMounted ? shuffleArray(filtered) : filtered;
+  }, [allElements, filter, isMounted]);
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-screen">

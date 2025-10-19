@@ -29,6 +29,7 @@ export default function Home() {
   const [allElements, setAllElements] = useState<Element[]>(BASE_ELEMENTS);
   const [activeElement, setActiveElement] = useState<Element | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -38,13 +39,14 @@ export default function Home() {
     })
   );
 
-  // Load saved data on mount
+  // Load saved data on mount and set mounted state
   useEffect(() => {
     const savedDiscoveries = loadDiscoveries();
     const savedCanvas = loadCanvasElements();
     setDiscoveries(savedDiscoveries);
     setCanvasElements(savedCanvas);
     setAllElements([...BASE_ELEMENTS, ...savedDiscoveries]);
+    setIsMounted(true);
   }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -253,6 +255,36 @@ export default function Home() {
     setCanvasElements([]);
     clearCanvasElements();
   };
+
+  // Render basic UI without DnD during SSR/hydration
+  if (!isMounted) {
+    return (
+      <div className="flex h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col">
+          <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Anything Goes</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Drag elements to combine and discover new story possibilities
+              </p>
+            </div>
+            <button
+              onClick={handleClearCanvas}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+            >
+              Clear Canvas
+            </button>
+          </header>
+
+          <div className="flex-1 p-6">
+            <Canvas canvasElements={canvasElements} onCombine={handleCombine} />
+          </div>
+        </div>
+
+        <Sidebar allElements={allElements} discoveries={discoveries} />
+      </div>
+    );
+  }
 
   return (
     <DndContext
