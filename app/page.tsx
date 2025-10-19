@@ -21,7 +21,8 @@ import {
 } from '@/lib/storage';
 import { Canvas } from '@/components/Canvas';
 import { Sidebar } from '@/components/Sidebar';
-import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName } from '@/lib/types';
+import { CustomElementModal } from '@/components/CustomElementModal';
+import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName, SystemType } from '@/lib/types';
 
 export default function Home() {
   const [discoveries, setDiscoveries] = useState<Element[]>([]);
@@ -33,6 +34,7 @@ export default function Home() {
   const [rerollableElementId, setRerollableElementId] = useState<string | null>(null);
   const [rejectedNames, setRejectedNames] = useState<string[]>([]);
   const [crystallizationElements, setCrystallizationElements] = useState<Element[]>([]);
+  const [customElementName, setCustomElementName] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -401,8 +403,8 @@ export default function Home() {
   };
 
   const handleCrystallize = async (type: ConcreteElementType) => {
-    if (crystallizationElements.length < 2) {
-      console.error('Need at least 2 elements to crystallize');
+    if (crystallizationElements.length < 1) {
+      console.error('Need at least 1 element to crystallize');
       return;
     }
 
@@ -475,6 +477,65 @@ export default function Home() {
     saveDiscoveries([]);
   };
 
+  const handleCreateElement = (name: string) => {
+    // Validate name length
+    if (name.trim().length === 0 || name.trim().length > 50) {
+      alert('Element name must be between 1 and 50 characters');
+      return;
+    }
+
+    // Check for duplicates
+    const isDuplicate = allElements.some(
+      (el) => el.name.toLowerCase() === name.trim().toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert('An element with this name already exists');
+      return;
+    }
+
+    // Show modal
+    setCustomElementName(name.trim());
+  };
+
+  const handleSaveCustomElement = (
+    name: string,
+    system: SystemType,
+    description: string
+  ) => {
+    // Double-check for duplicates with the final name
+    const isDuplicate = allElements.some(
+      (el) => el.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert('An element with this name already exists');
+      return;
+    }
+
+    // Create custom element
+    const customElement: Element = {
+      id: `custom-${Date.now()}`,
+      name,
+      description,
+      system,
+      discoveredAt: new Date().toISOString(),
+    };
+
+    // Add to discoveries
+    const updatedDiscoveries = [...discoveries, customElement];
+    setDiscoveries(updatedDiscoveries);
+    setAllElements([...BASE_ELEMENTS, ...updatedDiscoveries]);
+    saveDiscoveries(updatedDiscoveries);
+
+    // Close modal
+    setCustomElementName(null);
+  };
+
+  const handleCancelCustomElement = () => {
+    setCustomElementName(null);
+  };
+
   // Render basic UI without DnD during SSR/hydration
   if (!isMounted) {
     return (
@@ -508,7 +569,20 @@ export default function Home() {
           </div>
         </div>
 
-        <Sidebar allElements={allElements} discoveries={discoveries} onResetDiscoveries={handleResetDiscoveries} />
+        <Sidebar
+          allElements={allElements}
+          discoveries={discoveries}
+          onResetDiscoveries={handleResetDiscoveries}
+          onCreateElement={handleCreateElement}
+        />
+
+        {customElementName && (
+          <CustomElementModal
+            initialName={customElementName}
+            onSave={handleSaveCustomElement}
+            onCancel={handleCancelCustomElement}
+          />
+        )}
       </div>
     );
   }
@@ -557,8 +631,21 @@ export default function Home() {
         </div>
 
         {/* Right Sidebar */}
-        <Sidebar allElements={allElements} discoveries={discoveries} onResetDiscoveries={handleResetDiscoveries} />
+        <Sidebar
+          allElements={allElements}
+          discoveries={discoveries}
+          onResetDiscoveries={handleResetDiscoveries}
+          onCreateElement={handleCreateElement}
+        />
       </div>
+
+      {customElementName && (
+        <CustomElementModal
+          initialName={customElementName}
+          onSave={handleSaveCustomElement}
+          onCancel={handleCancelCustomElement}
+        />
+      )}
 
       {/* Drag Overlay */}
       <DragOverlay>

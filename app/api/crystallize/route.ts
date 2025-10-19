@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
     const body: CrystallizeRequest = await req.json();
     const { elements, type } = body;
 
-    if (!elements || elements.length < 2) {
+    if (!elements || elements.length < 1) {
       return NextResponse.json(
-        { error: 'At least 2 elements are required' },
+        { error: 'At least 1 element is required' },
         { status: 400 }
       );
     }

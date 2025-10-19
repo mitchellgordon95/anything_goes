@@ -32,7 +32,7 @@ export function CrystallizationZone({
     id: 'crystallization-zone',
   });
 
-  const canCrystallize = elementsInZone.length >= 2;
+  const canCrystallize = elementsInZone.length >= 1;
 
   const handleCrystallizeClick = () => {
     setShowTypeSelector(true);
@@ -69,7 +69,7 @@ export function CrystallizationZone({
       >
         {elementsInZone.length === 0 ? (
           <div className="text-center text-purple-400 text-sm py-4">
-            Drag 2+ elements here to crystallize into a concrete story element
+            Drag 1+ elements here to crystallize into a concrete story element
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
