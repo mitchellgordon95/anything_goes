@@ -39,19 +39,15 @@ Only respond with the name, nothing else.`
 Element 1: "${element1.name}" (from ${element1.system})
 Element 2: "${element2.name}" (from ${element2.system})
 
-Available systems:
-- Emotional Chemistry
-- Story Particles
-- Character Fusion
-- Trope Alchemy
-- Sensory World Building
-- Momentum Engine
+The combined element must belong to one of the two input systems:
+- ${element1.system}
+- ${element2.system}
 
-Decide which system the combined element belongs to and create a name for it.
+Decide which of these two systems the combined element belongs to and create a name for it.
 Respond with ONLY a JSON object in this format:
 {"system": "system-name", "name": "Element Name"}
 
-Use the exact system names from the list above.`;
+Use exactly one of the two system names listed above.`;
 
     // Log the prompt for inspection
     console.log('=== COMBINATION REQUEST ===');
