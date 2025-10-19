@@ -34,6 +34,9 @@ Element 1: "${element1.name}" (from ${element1.system})
 Element 2: "${element2.name}" (from ${element2.system})
 
 Create a name for what emerges when these combine. The result should feel like a natural evolution or synthesis.
+
+IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.
+
 Only respond with the name, nothing else.`
       : `Combine these two story elements from different systems:
 Element 1: "${element1.name}" (from ${element1.system})
@@ -42,6 +45,8 @@ Element 2: "${element2.name}" (from ${element2.system})
 The combined element must belong to one of the two input systems:
 - ${element1.system}
 - ${element2.system}
+
+IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.
 
 Decide which of these two systems the combined element belongs to and create a name for it.
 Respond with ONLY a JSON object in this format:
