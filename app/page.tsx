@@ -21,7 +21,7 @@ import {
 } from '@/lib/storage';
 import { Canvas } from '@/components/Canvas';
 import { Sidebar } from '@/components/Sidebar';
-import { SYSTEM_NAMES, SYSTEM_COLORS } from '@/lib/types';
+import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName } from '@/lib/types';
 
 export default function Home() {
   const [discoveries, setDiscoveries] = useState<Element[]>([]);
@@ -194,11 +194,22 @@ export default function Home() {
       const data = await response.json();
 
       if (data.success) {
+        // Determine the system for the new element
+        let elementSystem = el1.system; // Default to first element's system
+
+        // If cross-system and API returned a system, use it
+        if (data.system && el1.system !== el2.system) {
+          const systemType = getSystemTypeFromName(data.system);
+          if (systemType) {
+            elementSystem = systemType;
+          }
+        }
+
         // Create new element
         const newElement: Element = {
           id: `discovered-${Date.now()}`,
           name: data.name,
-          system: el1.system,
+          system: elementSystem,
           parents: [el1.id, el2.id],
           discoveredAt: new Date().toISOString(),
         };

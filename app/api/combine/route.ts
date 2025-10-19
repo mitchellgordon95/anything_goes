@@ -33,17 +33,25 @@ export async function POST(req: NextRequest) {
 Element 1: "${element1.name}" (from ${element1.system})
 Element 2: "${element2.name}" (from ${element2.system})
 
-Create a brief 2-4 word name for what emerges when these combine.
-The result should feel like a natural evolution or synthesis.
+Create a name for what emerges when these combine. The result should feel like a natural evolution or synthesis.
 Only respond with the name, nothing else.`
       : `Combine these two story elements from different systems:
 Element 1: "${element1.name}" (from ${element1.system})
 Element 2: "${element2.name}" (from ${element2.system})
 
-Find a poetic or metaphorical connection between them.
-Create a 2-4 word name that captures this synthesis.
-Be creative - even unusual combinations can create something meaningful.
-Only respond with the name, nothing else.`;
+Available systems:
+- Emotional Chemistry
+- Story Particles
+- Character Fusion
+- Trope Alchemy
+- Sensory World Building
+- Momentum Engine
+
+Decide which system the combined element belongs to and create a name for it.
+Respond with ONLY a JSON object in this format:
+{"system": "system-name", "name": "Element Name"}
+
+Use the exact system names from the list above.`;
 
     // Log the prompt for inspection
     console.log('=== COMBINATION REQUEST ===');
@@ -57,21 +65,40 @@ Only respond with the name, nothing else.`;
     const { text } = await generateText({
       model: anthropic('claude-3-5-haiku-20241022'),
       prompt,
-      maxTokens: 50,
+      maxTokens: 100,
       temperature: 0.8,
     });
 
-    // Clean up the response
-    const resultName = text.trim().replace(/^["']|["']$/g, '');
+    // Parse response based on combination type
+    let resultName: string;
+    let resultSystem: string | undefined;
+
+    if (isSameSystem) {
+      // Simple text response
+      resultName = text.trim().replace(/^["']|["']$/g, '');
+    } else {
+      // JSON response for cross-system
+      try {
+        const parsed = JSON.parse(text.trim());
+        resultName = parsed.name;
+        resultSystem = parsed.system;
+      } catch (e) {
+        // Fallback if JSON parsing fails
+        console.error('Failed to parse JSON response:', e);
+        resultName = text.trim().replace(/^["']|["']$/g, '');
+      }
+    }
 
     // Log the response
     console.log('=== RESPONSE ===');
     console.log('Raw:', text);
-    console.log('Cleaned:', resultName);
+    console.log('Name:', resultName);
+    if (resultSystem) console.log('System:', resultSystem);
     console.log('================\n');
 
     return NextResponse.json({
       name: resultName,
+      system: resultSystem,
       success: true,
     });
   } catch (error) {

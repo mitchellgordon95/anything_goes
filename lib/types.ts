@@ -48,3 +48,11 @@ export interface CanvasElement {
   element: Element;
   position: Position;
 }
+
+// Helper to convert from display name to system type
+export function getSystemTypeFromName(name: string): SystemType | undefined {
+  const entry = Object.entries(SYSTEM_NAMES).find(
+    ([_, displayName]) => displayName === name
+  );
+  return entry ? (entry[0] as SystemType) : undefined;
+}
