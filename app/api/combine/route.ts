@@ -39,11 +39,14 @@ export async function POST(req: NextRequest) {
 Element 1: "${element1.name}" (from ${element1.system})
 Element 2: "${element2.name}" (from ${element2.system})
 
-Create a name for what emerges when these combine. The result should feel like a natural evolution or synthesis.
+Create a name and description for what emerges when these combine. The result should feel like a natural evolution or synthesis.
 
 IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.${rejectedSection}
 
-Only respond with the name, nothing else.`
+Respond with ONLY a JSON object in this format:
+{"name": "Element Name", "description": "1-2 sentence trading card style flavor text"}
+
+Keep the description concise and evocative, like flavor text on a trading card.`
       : `Combine these two story elements from different systems:
 Element 1: "${element1.name}" (from ${element1.system})
 Element 2: "${element2.name}" (from ${element2.system})
@@ -54,11 +57,11 @@ The combined element must belong to one of the two input systems:
 
 IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.${rejectedSection}
 
-Decide which of these two systems the combined element belongs to and create a name for it.
+Decide which of these two systems the combined element belongs to and create a name and description for it.
 Respond with ONLY a JSON object in this format:
-{"system": "system-name", "name": "Element Name"}
+{"system": "system-name", "name": "Element Name", "description": "1-2 sentence trading card style flavor text"}
 
-Use exactly one of the two system names listed above.`;
+Use exactly one of the two system names listed above. Keep the description concise and evocative.`;
 
     // Log the prompt for inspection
     console.log('=== COMBINATION REQUEST ===');
@@ -70,41 +73,40 @@ Use exactly one of the two system names listed above.`;
     console.log('================\n');
 
     const { text } = await generateText({
-      model: anthropic('claude-3-5-haiku-20241022'),
+      model: anthropic('claude-sonnet-4-20250514'),
       prompt,
-      maxTokens: 100,
+      maxTokens: 150,
       temperature: 0.8,
     });
 
-    // Parse response based on combination type
+    // Parse response - both types now return JSON
     let resultName: string;
+    let resultDescription: string;
     let resultSystem: string | undefined;
 
-    if (isSameSystem) {
-      // Simple text response
+    try {
+      const parsed = JSON.parse(text.trim());
+      resultName = parsed.name;
+      resultDescription = parsed.description || '';
+      resultSystem = parsed.system; // Only present for cross-system
+    } catch (e) {
+      // Fallback if JSON parsing fails
+      console.error('Failed to parse JSON response:', e);
       resultName = text.trim().replace(/^["']|["']$/g, '');
-    } else {
-      // JSON response for cross-system
-      try {
-        const parsed = JSON.parse(text.trim());
-        resultName = parsed.name;
-        resultSystem = parsed.system;
-      } catch (e) {
-        // Fallback if JSON parsing fails
-        console.error('Failed to parse JSON response:', e);
-        resultName = text.trim().replace(/^["']|["']$/g, '');
-      }
+      resultDescription = '';
     }
 
     // Log the response
     console.log('=== RESPONSE ===');
     console.log('Raw:', text);
     console.log('Name:', resultName);
+    console.log('Description:', resultDescription);
     if (resultSystem) console.log('System:', resultSystem);
     console.log('================\n');
 
     return NextResponse.json({
       name: resultName,
+      description: resultDescription,
       system: resultSystem,
       success: true,
     });

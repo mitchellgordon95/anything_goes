@@ -10,7 +10,7 @@ import {
   useSensors,
   PointerSensor,
 } from '@dnd-kit/core';
-import { Element, CanvasElement as CanvasElementType } from '@/lib/types';
+import { Element, CanvasElement as CanvasElementType, ConcreteElementType } from '@/lib/types';
 import { BASE_ELEMENTS } from '@/lib/baseElements';
 import {
   loadDiscoveries,
@@ -32,6 +32,7 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [rerollableElementId, setRerollableElementId] = useState<string | null>(null);
   const [rejectedNames, setRejectedNames] = useState<string[]>([]);
+  const [crystallizationElements, setCrystallizationElements] = useState<Element[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -84,6 +85,32 @@ export default function Home() {
       );
       setCanvasElements(updatedCanvas);
       saveCanvasElements(updatedCanvas);
+      return;
+    }
+
+    // Case: Dragging to crystallization zone
+    if (over?.id === 'crystallization-zone') {
+      const element = activeData?.element;
+      if (element) {
+        // Check if element is already in the zone
+        const alreadyInZone = crystallizationElements.some(
+          (e) => e.id === element.id
+        );
+
+        if (!alreadyInZone) {
+          // If from canvas, remove from canvas
+          if (activeData?.source === 'canvas') {
+            const updatedCanvas = canvasElements.filter(
+              (ce) => ce.element.id !== element.id
+            );
+            setCanvasElements(updatedCanvas);
+            saveCanvasElements(updatedCanvas);
+          }
+
+          // Add to crystallization zone
+          setCrystallizationElements([...crystallizationElements, element]);
+        }
+      }
       return;
     }
 
@@ -200,6 +227,12 @@ export default function Home() {
 
     if (!el1 || !el2) return;
 
+    // Block combining crystallized elements
+    if (el1.concreteType || el2.concreteType) {
+      alert('Combining crystallized elements is not yet supported. Stay tuned for future updates!');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch('/api/combine', {
@@ -229,6 +262,7 @@ export default function Home() {
         const newElement: Element = {
           id: `discovered-${Date.now()}`,
           name: data.name,
+          description: data.description,
           system: elementSystem,
           parents: [el1.id, el2.id],
           discoveredAt: new Date().toISOString(),
@@ -323,6 +357,7 @@ export default function Home() {
         const newElement: Element = {
           id: `discovered-${Date.now()}`,
           name: data.name,
+          description: data.description,
           system: elementSystem,
           parents: [el1.id, el2.id],
           discoveredAt: new Date().toISOString(),
@@ -354,6 +389,76 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Failed to reroll:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveFromCrystallization = (elementId: string) => {
+    setCrystallizationElements(
+      crystallizationElements.filter((e) => e.id !== elementId)
+    );
+  };
+
+  const handleCrystallize = async (type: ConcreteElementType) => {
+    if (crystallizationElements.length < 2) {
+      console.error('Need at least 2 elements to crystallize');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/crystallize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          elements: crystallizationElements.map((e) => ({
+            name: e.name,
+            system: SYSTEM_NAMES[e.system],
+            description: e.description,
+          })),
+          type,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Create crystallized element
+        const crystallizedElement: Element = {
+          id: `crystallized-${Date.now()}`,
+          name: data.name,
+          description: data.description,
+          system: crystallizationElements[0].system, // Use first element's system
+          concreteType: type,
+          discoveredAt: new Date().toISOString(),
+        };
+
+        // Add to discoveries
+        const updatedDiscoveries = [...discoveries, crystallizedElement];
+        setDiscoveries(updatedDiscoveries);
+        setAllElements([...BASE_ELEMENTS, ...updatedDiscoveries]);
+        saveDiscoveries(updatedDiscoveries);
+
+        // Add to canvas at center
+        const canvasEl = document.querySelector('[data-canvas]');
+        if (canvasEl) {
+          const rect = canvasEl.getBoundingClientRect();
+          const newCanvasElement: CanvasElementType = {
+            element: crystallizedElement,
+            position: { x: rect.width / 2 - 50, y: rect.height / 2 - 20 },
+          };
+
+          const updatedCanvas = [...canvasElements, newCanvasElement];
+          setCanvasElements(updatedCanvas);
+          saveCanvasElements(updatedCanvas);
+        }
+
+        // Clear crystallization zone
+        setCrystallizationElements([]);
+      }
+    } catch (error) {
+      console.error('Failed to crystallize:', error);
     } finally {
       setIsLoading(false);
     }
@@ -396,6 +501,9 @@ export default function Home() {
               onCombine={handleCombine}
               rerollableElementId={rerollableElementId}
               onReroll={handleReroll}
+              crystallizationElements={crystallizationElements}
+              onCrystallize={handleCrystallize}
+              onRemoveFromCrystallization={handleRemoveFromCrystallization}
             />
           </div>
         </div>
@@ -435,6 +543,9 @@ export default function Home() {
               onCombine={handleCombine}
               rerollableElementId={rerollableElementId}
               onReroll={handleReroll}
+              crystallizationElements={crystallizationElements}
+              onCrystallize={handleCrystallize}
+              onRemoveFromCrystallization={handleRemoveFromCrystallization}
             />
           </div>
 

@@ -48,6 +48,7 @@ export function CanvasElementCard({
       style={style}
       {...listeners}
       {...attributes}
+      title={element.description}
       className={`
         px-4 py-2 rounded-lg border-2 bg-white shadow-md cursor-grab
         transition-all select-none relative
@@ -67,8 +68,15 @@ export function CanvasElementCard({
           ↻
         </button>
       )}
-      <div className="font-medium text-gray-900 text-sm whitespace-nowrap">
-        {element.name}
+      <div className="flex items-center gap-2">
+        <div className="font-medium text-gray-900 text-sm whitespace-nowrap">
+          {element.name}
+        </div>
+        {element.concreteType && (
+          <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+            {element.concreteType}
+          </span>
+        )}
       </div>
     </div>
   );
