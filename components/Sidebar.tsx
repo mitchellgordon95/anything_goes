@@ -9,7 +9,6 @@ interface SidebarProps {
   discoveries: Element[];
   onResetDiscoveries: () => void;
   onCreateElement: (name: string) => void;
-  onInspectElement: (elementId: string) => void;
 }
 
 // Shuffle array using Fisher-Yates algorithm
@@ -22,7 +21,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, onInspectElement }: SidebarProps) {
+export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement }: SidebarProps) {
   const [selectedSystems, setSelectedSystems] = useState<Set<SystemType>>(
     new Set(Object.keys(SYSTEM_NAMES) as SystemType[])
   );
@@ -159,7 +158,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
         ) : (
           <div className="flex flex-wrap gap-2">
             {filteredElements.map((element) => (
-              <SidebarElement key={element.id} element={element} onInspect={onInspectElement} />
+              <SidebarElement key={element.id} element={element} />
             ))}
           </div>
         )}

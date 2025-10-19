@@ -600,7 +600,6 @@ export default function Home() {
           discoveries={discoveries}
           onResetDiscoveries={handleResetDiscoveries}
           onCreateElement={handleCreateElement}
-          onInspectElement={handleInspectElement}
         />
 
         {customElementName && (
@@ -672,7 +671,6 @@ export default function Home() {
           discoveries={discoveries}
           onResetDiscoveries={handleResetDiscoveries}
           onCreateElement={handleCreateElement}
-          onInspectElement={handleInspectElement}
         />
       </div>
 

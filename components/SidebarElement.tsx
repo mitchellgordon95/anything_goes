@@ -5,10 +5,9 @@ import { Element, SYSTEM_COLORS } from '@/lib/types';
 
 interface SidebarElementProps {
   element: Element;
-  onInspect: (elementId: string) => void;
 }
 
-export function SidebarElement({ element, onInspect }: SidebarElementProps) {
+export function SidebarElement({ element }: SidebarElementProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `sidebar-${element.id}`,
     data: { element, source: 'sidebar' },
@@ -29,16 +28,7 @@ export function SidebarElement({ element, onInspect }: SidebarElementProps) {
         ${isDragging ? 'opacity-50' : ''}
       `}
     >
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-          onInspect(element.id);
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        className="font-medium text-gray-900 text-sm cursor-pointer hover:text-purple-600 transition-colors"
-      >
-        {element.name}
-      </div>
+      <div className="font-medium text-gray-900 text-sm">{element.name}</div>
     </div>
   );
 }
