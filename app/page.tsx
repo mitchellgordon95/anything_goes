@@ -72,6 +72,19 @@ export default function Home() {
 
     setActiveElement(null);
 
+    // Case: Dragging canvas element off the canvas (delete it)
+    if (activeData?.source === 'canvas' && !over) {
+      const element = activeData.element;
+      console.log('Removing element from canvas:', element.name);
+
+      const updatedCanvas = canvasElements.filter(
+        (ce) => ce.element.id !== element.id
+      );
+      setCanvasElements(updatedCanvas);
+      saveCanvasElements(updatedCanvas);
+      return;
+    }
+
     if (!over) {
       console.log('No drop target');
       return;
