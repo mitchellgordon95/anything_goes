@@ -62,12 +62,14 @@ export default function Home() {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    const activeData = active.data.current;
+    const overData = over?.data.current;
 
     console.log('Drag end:', {
       activeId: active.id,
       overId: over?.id,
-      activeData: active.data.current,
-      overData: over?.data.current
+      activeData: activeData,
+      overData: overData
     });
 
     setActiveElement(null);
@@ -89,9 +91,6 @@ export default function Home() {
       console.log('No drop target');
       return;
     }
-
-    const activeData = active.data.current;
-    const overData = over.data.current;
 
     // Case 1: Dragging from sidebar to canvas
     if (activeData?.source === 'sidebar' && over.id === 'canvas') {
