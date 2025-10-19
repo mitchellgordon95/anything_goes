@@ -256,6 +256,12 @@ export default function Home() {
     clearCanvasElements();
   };
 
+  const handleResetDiscoveries = () => {
+    setDiscoveries([]);
+    setAllElements(BASE_ELEMENTS);
+    saveDiscoveries([]);
+  };
+
   // Render basic UI without DnD during SSR/hydration
   if (!isMounted) {
     return (
@@ -281,7 +287,7 @@ export default function Home() {
           </div>
         </div>
 
-        <Sidebar allElements={allElements} discoveries={discoveries} />
+        <Sidebar allElements={allElements} discoveries={discoveries} onResetDiscoveries={handleResetDiscoveries} />
       </div>
     );
   }
@@ -322,7 +328,7 @@ export default function Home() {
         </div>
 
         {/* Right Sidebar */}
-        <Sidebar allElements={allElements} discoveries={discoveries} />
+        <Sidebar allElements={allElements} discoveries={discoveries} onResetDiscoveries={handleResetDiscoveries} />
       </div>
 
       {/* Drag Overlay */}

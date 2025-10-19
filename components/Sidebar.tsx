@@ -7,6 +7,7 @@ import { SidebarElement } from './SidebarElement';
 interface SidebarProps {
   allElements: Element[];
   discoveries: Element[];
+  onResetDiscoveries: () => void;
 }
 
 // Shuffle array using Fisher-Yates algorithm
@@ -19,7 +20,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function Sidebar({ allElements, discoveries }: SidebarProps) {
+export function Sidebar({ allElements, discoveries, onResetDiscoveries }: SidebarProps) {
   const [filter, setFilter] = useState<SystemType | 'all'>('all');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -59,8 +60,20 @@ export function Sidebar({ allElements, discoveries }: SidebarProps) {
           })}
         </select>
 
-        <div className="mt-3 text-xs text-gray-500">
-          {discoveries.length} discovered
+        <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
+          <span>{discoveries.length} discovered</span>
+          {discoveries.length > 0 && (
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to reset all discovered elements? This cannot be undone.')) {
+                  onResetDiscoveries();
+                }
+              }}
+              className="text-red-500 hover:text-red-700 underline"
+            >
+              reset
+            </button>
+          )}
         </div>
       </div>
 
