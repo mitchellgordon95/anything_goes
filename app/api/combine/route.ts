@@ -11,12 +11,13 @@ interface CombineRequest {
     name: string;
     system: string;
   };
+  rejectedNames?: string[];
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: CombineRequest = await req.json();
-    const { element1, element2 } = body;
+    const { element1, element2, rejectedNames = [] } = body;
 
     if (!element1 || !element2) {
       return NextResponse.json(
@@ -27,6 +28,11 @@ export async function POST(req: NextRequest) {
 
     const isSameSystem = element1.system === element2.system;
 
+    // Build rejected names section if any exist
+    const rejectedSection = rejectedNames.length > 0
+      ? `\n\nDo NOT use any of these previously rejected names:\n${rejectedNames.map(name => `- "${name}"`).join('\n')}`
+      : '';
+
     // Generate prompt based on whether it's same-system or cross-system
     const prompt = isSameSystem
       ? `Combine these two story elements into a new, more complex element:
@@ -35,7 +41,7 @@ Element 2: "${element2.name}" (from ${element2.system})
 
 Create a name for what emerges when these combine. The result should feel like a natural evolution or synthesis.
 
-IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.
+IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.${rejectedSection}
 
 Only respond with the name, nothing else.`
       : `Combine these two story elements from different systems:
@@ -46,7 +52,7 @@ The combined element must belong to one of the two input systems:
 - ${element1.system}
 - ${element2.system}
 
-IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.
+IMPORTANT: The combined element must include ALL traits from both elements. Do not leave anything out - the result should be a complete fusion that preserves everything from both inputs.${rejectedSection}
 
 Decide which of these two systems the combined element belongs to and create a name for it.
 Respond with ONLY a JSON object in this format:

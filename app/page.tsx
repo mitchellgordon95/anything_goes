@@ -30,6 +30,8 @@ export default function Home() {
   const [activeElement, setActiveElement] = useState<Element | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [rerollableElementId, setRerollableElementId] = useState<string | null>(null);
+  const [rejectedNames, setRejectedNames] = useState<string[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -52,6 +54,10 @@ export default function Home() {
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     setActiveElement(active.data.current?.element || null);
+
+    // Clear reroll state on any drag
+    setRerollableElementId(null);
+    setRejectedNames([]);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -243,9 +249,99 @@ export default function Home() {
           setCanvasElements(updatedCanvas);
           saveCanvasElements(updatedCanvas);
         }
+
+        // Set reroll state for the newly created element
+        setRerollableElementId(newElement.id);
+        setRejectedNames([]);
       }
     } catch (error) {
       console.error('Failed to combine:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReroll = async (elementId: string) => {
+    // Find the element to reroll
+    const element = allElements.find((e) => e.id === elementId);
+    if (!element || !element.parents) {
+      console.error('Element not found or has no parents');
+      return;
+    }
+
+    // Get parent elements
+    const [parentId1, parentId2] = element.parents;
+    const el1 = allElements.find((e) => e.id === parentId1);
+    const el2 = allElements.find((e) => e.id === parentId2);
+
+    if (!el1 || !el2) {
+      console.error('Parent elements not found');
+      return;
+    }
+
+    // Add current name to rejected names
+    const updatedRejectedNames = [...rejectedNames, element.name];
+    setRejectedNames(updatedRejectedNames);
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/combine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          element1: { name: el1.name, system: SYSTEM_NAMES[el1.system] },
+          element2: { name: el2.name, system: SYSTEM_NAMES[el2.system] },
+          rejectedNames: updatedRejectedNames,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Determine the system for the new element
+        let elementSystem = el1.system;
+        if (data.system && el1.system !== el2.system) {
+          const systemType = getSystemTypeFromName(data.system);
+          if (systemType) {
+            elementSystem = systemType;
+          }
+        }
+
+        // Create new element with fresh ID
+        const newElement: Element = {
+          id: `discovered-${Date.now()}`,
+          name: data.name,
+          system: elementSystem,
+          parents: [el1.id, el2.id],
+          discoveredAt: new Date().toISOString(),
+        };
+
+        // Remove old element from discoveries
+        const updatedDiscoveries = discoveries
+          .filter((d) => d.id !== elementId)
+          .concat(newElement);
+        setDiscoveries(updatedDiscoveries);
+        setAllElements([...BASE_ELEMENTS, ...updatedDiscoveries]);
+        saveDiscoveries(updatedDiscoveries);
+
+        // Update canvas if element is there
+        const canvasElement = canvasElements.find((ce) => ce.element.id === elementId);
+        if (canvasElement) {
+          const updatedCanvas = canvasElements
+            .filter((ce) => ce.element.id !== elementId)
+            .concat({
+              element: newElement,
+              position: canvasElement.position,
+            });
+          setCanvasElements(updatedCanvas);
+          saveCanvasElements(updatedCanvas);
+        }
+
+        // Update rerollable ID to the new element
+        setRerollableElementId(newElement.id);
+      }
+    } catch (error) {
+      console.error('Failed to reroll:', error);
     } finally {
       setIsLoading(false);
     }
@@ -283,7 +379,12 @@ export default function Home() {
           </header>
 
           <div className="flex-1 p-6">
-            <Canvas canvasElements={canvasElements} onCombine={handleCombine} />
+            <Canvas
+              canvasElements={canvasElements}
+              onCombine={handleCombine}
+              rerollableElementId={rerollableElementId}
+              onReroll={handleReroll}
+            />
           </div>
         </div>
 
@@ -317,7 +418,12 @@ export default function Home() {
           </header>
 
           <div className="flex-1 p-6">
-            <Canvas canvasElements={canvasElements} onCombine={handleCombine} />
+            <Canvas
+              canvasElements={canvasElements}
+              onCombine={handleCombine}
+              rerollableElementId={rerollableElementId}
+              onReroll={handleReroll}
+            />
           </div>
 
           {isLoading && (

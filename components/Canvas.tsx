@@ -7,9 +7,11 @@ import { CanvasElementCard } from './CanvasElementCard';
 interface CanvasProps {
   canvasElements: CanvasElement[];
   onCombine: (elementId1: string, elementId2: string) => void;
+  rerollableElementId: string | null;
+  onReroll: (elementId: string) => void;
 }
 
-export function Canvas({ canvasElements, onCombine }: CanvasProps) {
+export function Canvas({ canvasElements, onCombine, rerollableElementId, onReroll }: CanvasProps) {
   const { setNodeRef } = useDroppable({
     id: 'canvas',
   });
@@ -25,6 +27,8 @@ export function Canvas({ canvasElements, onCombine }: CanvasProps) {
           key={canvasEl.element.id}
           canvasElement={canvasEl}
           onCombine={onCombine}
+          isRerollable={canvasEl.element.id === rerollableElementId}
+          onReroll={onReroll}
         />
       ))}
 
