@@ -53,9 +53,6 @@ export function CanvasElementCard({
       <div className="font-medium text-gray-900 text-sm whitespace-nowrap">
         {element.name}
       </div>
-      {element.tier > 0 && (
-        <div className="text-xs text-gray-500 mt-0.5">Tier {element.tier}</div>
-      )}
     </div>
   );
 }

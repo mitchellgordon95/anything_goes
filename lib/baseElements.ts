@@ -9,7 +9,6 @@ function createBaseElement(
     id: `${system}-${index}`,
     name,
     system,
-    tier: 0,
   };
 }
 

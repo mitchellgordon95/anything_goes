@@ -2,7 +2,6 @@ export interface Element {
   id: string;
   name: string;
   system: SystemType;
-  tier: number; // 0 for base elements, increases with combination
   parents?: [string, string]; // IDs of elements that created this
   discoveredAt?: string; // ISO timestamp
 }

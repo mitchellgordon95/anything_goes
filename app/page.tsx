@@ -199,7 +199,6 @@ export default function Home() {
           id: `discovered-${Date.now()}`,
           name: data.name,
           system: el1.system,
-          tier: Math.max(el1.tier, el2.tier) + 1,
           parents: [el1.id, el2.id],
           discoveredAt: new Date().toISOString(),
         };
@@ -293,11 +292,6 @@ export default function Home() {
             <div className="font-medium text-gray-900 text-sm">
               {activeElement.name}
             </div>
-            {activeElement.tier > 0 && (
-              <div className="text-xs text-gray-500 mt-0.5">
-                Tier {activeElement.tier}
-              </div>
-            )}
           </div>
         ) : null}
       </DragOverlay>

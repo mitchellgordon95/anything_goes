@@ -22,15 +22,12 @@ export function SidebarElement({ element }: SidebarElementProps) {
       {...attributes}
       style={{ borderColor }}
       className={`
-        px-3 py-2 rounded-lg border-2 bg-white cursor-grab
-        transition-all select-none hover:shadow-md
+        inline-flex px-2 py-1 rounded-lg border-2 bg-white cursor-grab
+        transition-all select-none hover:shadow-md whitespace-nowrap
         ${isDragging ? 'opacity-50' : ''}
       `}
     >
       <div className="font-medium text-gray-900 text-sm">{element.name}</div>
-      {element.tier > 0 && (
-        <div className="text-xs text-gray-500 mt-0.5">Tier {element.tier}</div>
-      )}
     </div>
   );
 }
