@@ -37,6 +37,9 @@ export default function Home() {
   const [crystallizationElements, setCrystallizationElements] = useState<Element[]>([]);
   const [customElementName, setCustomElementName] = useState<string | null>(null);
   const [inspectedElement, setInspectedElement] = useState<Element | null>(null);
+  const [selectedSystems, setSelectedSystems] = useState<Set<SystemType>>(
+    new Set(Object.keys(SYSTEM_NAMES) as SystemType[])
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -542,6 +545,9 @@ export default function Home() {
     setAllElements([...BASE_ELEMENTS, ...updatedDiscoveries]);
     saveDiscoveries(updatedDiscoveries);
 
+    // Update filter to show only the new element's system
+    setSelectedSystems(new Set([system]));
+
     // Close modal
     setCustomElementName(null);
   };
@@ -600,6 +606,8 @@ export default function Home() {
           discoveries={discoveries}
           onResetDiscoveries={handleResetDiscoveries}
           onCreateElement={handleCreateElement}
+          selectedSystems={selectedSystems}
+          onSelectedSystemsChange={setSelectedSystems}
         />
 
         {customElementName && (
@@ -671,6 +679,8 @@ export default function Home() {
           discoveries={discoveries}
           onResetDiscoveries={handleResetDiscoveries}
           onCreateElement={handleCreateElement}
+          selectedSystems={selectedSystems}
+          onSelectedSystemsChange={setSelectedSystems}
         />
       </div>
 

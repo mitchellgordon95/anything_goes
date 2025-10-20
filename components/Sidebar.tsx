@@ -9,6 +9,8 @@ interface SidebarProps {
   discoveries: Element[];
   onResetDiscoveries: () => void;
   onCreateElement: (name: string) => void;
+  selectedSystems: Set<SystemType>;
+  onSelectedSystemsChange: (systems: Set<SystemType>) => void;
 }
 
 // Shuffle array using Fisher-Yates algorithm
@@ -21,10 +23,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement }: SidebarProps) {
-  const [selectedSystems, setSelectedSystems] = useState<Set<SystemType>>(
-    new Set(Object.keys(SYSTEM_NAMES) as SystemType[])
-  );
+export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, selectedSystems, onSelectedSystemsChange }: SidebarProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -40,7 +39,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
     } else {
       newSelected.add(system);
     }
-    setSelectedSystems(newSelected);
+    onSelectedSystemsChange(newSelected);
   };
 
   // Get only systems that have elements
@@ -55,10 +54,10 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
   const toggleAll = () => {
     if (selectedSystems.size === availableSystems.length) {
       // All available systems selected, clear all
-      setSelectedSystems(new Set());
+      onSelectedSystemsChange(new Set());
     } else {
       // Select all available systems
-      setSelectedSystems(new Set(availableSystems));
+      onSelectedSystemsChange(new Set(availableSystems));
     }
   };
 
