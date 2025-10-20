@@ -15,11 +15,8 @@ const CONCRETE_TYPES: SystemType[] = [
   'character',
   'location',
   'scene',
-  'beat',
   'object',
-  'relationship',
   'event',
-  'theme',
 ];
 
 export function ConcreteSidebar({ concreteElements, onHoverElement, elementsInLimbo }: ConcreteSidebarProps) {

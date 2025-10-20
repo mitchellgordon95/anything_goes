@@ -91,6 +91,9 @@ export const ABSTRACT_SYSTEMS: SystemType[] = [
   'tropes',
   'sensory',
   'momentum',
+  'theme',
+  'relationship',
+  'beat',
 ];
 
 // Concrete systems (result of crystallization)
@@ -98,11 +101,8 @@ const CONCRETE_SYSTEMS: SystemType[] = [
   'character',
   'location',
   'scene',
-  'beat',
   'object',
-  'relationship',
   'event',
-  'theme',
 ];
 
 // Helper to check if a system is abstract

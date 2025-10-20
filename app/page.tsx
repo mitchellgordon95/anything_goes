@@ -24,7 +24,7 @@ import {
 import { Canvas } from '@/components/Canvas';
 import { Sidebar } from '@/components/Sidebar';
 import { CustomElementModal } from '@/components/CustomElementModal';
-import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName, ABSTRACT_SYSTEMS } from '@/lib/types';
+import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName, ABSTRACT_SYSTEMS, isConcreteSystem } from '@/lib/types';
 
 export default function Home() {
   const [discoveries, setDiscoveries] = useState<Element[]>([]); // Abstract combinations only
@@ -312,18 +312,8 @@ export default function Home() {
     if (!el1 || !el2) return;
 
     // Block combining crystallized elements (elements with concrete system types)
-    const concreteTypes: SystemType[] = [
-      'character',
-      'location',
-      'scene',
-      'beat',
-      'object',
-      'relationship',
-      'event',
-      'theme',
-    ];
-    const isEl1Concrete = concreteTypes.includes(el1.system);
-    const isEl2Concrete = concreteTypes.includes(el2.system);
+    const isEl1Concrete = isConcreteSystem(el1.system);
+    const isEl2Concrete = isConcreteSystem(el2.system);
 
     if (isEl1Concrete || isEl2Concrete) {
       alert('Combining crystallized elements is not yet supported. Stay tuned for future updates!');
