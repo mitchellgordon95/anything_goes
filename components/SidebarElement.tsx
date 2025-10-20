@@ -5,9 +5,10 @@ import { Element, SYSTEM_COLORS } from '@/lib/types';
 
 interface SidebarElementProps {
   element: Element;
+  onHover: (element: Element | null) => void;
 }
 
-export function SidebarElement({ element }: SidebarElementProps) {
+export function SidebarElement({ element, onHover }: SidebarElementProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `sidebar-${element.id}`,
     data: { element, source: 'sidebar' },
@@ -22,6 +23,7 @@ export function SidebarElement({ element }: SidebarElementProps) {
       {...attributes}
       style={{ borderColor }}
       title={element.description}
+      onMouseEnter={() => onHover(element)}
       className={`
         inline-flex px-2 py-1 rounded-lg border-2 bg-white cursor-grab
         transition-all select-none hover:shadow-md whitespace-nowrap

@@ -2,14 +2,14 @@
 
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { CanvasElement, SYSTEM_COLORS } from '@/lib/types';
+import { CanvasElement, Element, SYSTEM_COLORS } from '@/lib/types';
 
 interface CanvasElementCardProps {
   canvasElement: CanvasElement;
   onCombine: (elementId1: string, elementId2: string) => void;
   isRerollable: boolean;
   onReroll: (elementId: string) => void;
-  onInspect: (elementId: string) => void;
+  onHover: (element: Element | null) => void;
 }
 
 export function CanvasElementCard({
@@ -17,7 +17,7 @@ export function CanvasElementCard({
   onCombine, // eslint-disable-line @typescript-eslint/no-unused-vars
   isRerollable,
   onReroll,
-  onInspect,
+  onHover,
 }: CanvasElementCardProps) {
   const { element, position } = canvasElement;
 
@@ -51,6 +51,7 @@ export function CanvasElementCard({
       {...listeners}
       {...attributes}
       title={element.description}
+      onMouseEnter={() => onHover(element)}
       className={`
         px-4 py-2 rounded-lg border-2 bg-white shadow-md cursor-grab
         transition-all select-none relative
@@ -70,14 +71,7 @@ export function CanvasElementCard({
           ↻
         </button>
       )}
-      <div
-        onClick={(e) => {
-          e.stopPropagation();
-          onInspect(element.id);
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        className="font-medium text-gray-900 text-sm whitespace-nowrap cursor-pointer hover:text-purple-600 transition-colors"
-      >
+      <div className="font-medium text-gray-900 text-sm whitespace-nowrap">
         {element.name}
       </div>
     </div>

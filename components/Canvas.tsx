@@ -13,7 +13,7 @@ interface CanvasProps {
   crystallizationElements: Element[];
   onCrystallize: (type: SystemType) => void;
   onRemoveFromCrystallization: (elementId: string) => void;
-  onInspectElement: (elementId: string) => void;
+  onHoverElement: (element: Element | null) => void;
 }
 
 export function Canvas({
@@ -24,7 +24,7 @@ export function Canvas({
   crystallizationElements,
   onCrystallize,
   onRemoveFromCrystallization,
-  onInspectElement
+  onHoverElement
 }: CanvasProps) {
   const { setNodeRef } = useDroppable({
     id: 'canvas',
@@ -44,7 +44,7 @@ export function Canvas({
             onCombine={onCombine}
             isRerollable={canvasEl.element.id === rerollableElementId}
             onReroll={onReroll}
-            onInspect={onInspectElement}
+            onHover={onHoverElement}
           />
         ))}
 

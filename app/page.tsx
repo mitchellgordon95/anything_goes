@@ -22,7 +22,6 @@ import {
 import { Canvas } from '@/components/Canvas';
 import { Sidebar } from '@/components/Sidebar';
 import { CustomElementModal } from '@/components/CustomElementModal';
-import { ElementInspector } from '@/components/ElementInspector';
 import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName } from '@/lib/types';
 
 export default function Home() {
@@ -556,15 +555,8 @@ export default function Home() {
     setCustomElementName(null);
   };
 
-  const handleInspectElement = (elementId: string) => {
-    const element = allElements.find((e) => e.id === elementId);
-    if (element) {
-      setInspectedElement(element);
-    }
-  };
-
-  const handleCloseInspector = () => {
-    setInspectedElement(null);
+  const handleHoverElement = (element: Element | null) => {
+    setInspectedElement(element);
   };
 
   // Render basic UI without DnD during SSR/hydration
@@ -596,7 +588,7 @@ export default function Home() {
               crystallizationElements={crystallizationElements}
               onCrystallize={handleCrystallize}
               onRemoveFromCrystallization={handleRemoveFromCrystallization}
-              onInspectElement={handleInspectElement}
+              onHoverElement={handleHoverElement}
             />
           </div>
         </div>
@@ -608,6 +600,8 @@ export default function Home() {
           onCreateElement={handleCreateElement}
           selectedSystems={selectedSystems}
           onSelectedSystemsChange={setSelectedSystems}
+          inspectedElement={inspectedElement}
+          onInspectedElementChange={setInspectedElement}
         />
 
         {customElementName && (
@@ -615,14 +609,6 @@ export default function Home() {
             initialName={customElementName}
             onSave={handleSaveCustomElement}
             onCancel={handleCancelCustomElement}
-          />
-        )}
-
-        {inspectedElement && (
-          <ElementInspector
-            element={inspectedElement}
-            allElements={allElements}
-            onClose={handleCloseInspector}
           />
         )}
       </div>
@@ -662,7 +648,7 @@ export default function Home() {
               crystallizationElements={crystallizationElements}
               onCrystallize={handleCrystallize}
               onRemoveFromCrystallization={handleRemoveFromCrystallization}
-              onInspectElement={handleInspectElement}
+              onHoverElement={handleHoverElement}
             />
           </div>
 
@@ -681,6 +667,8 @@ export default function Home() {
           onCreateElement={handleCreateElement}
           selectedSystems={selectedSystems}
           onSelectedSystemsChange={setSelectedSystems}
+          inspectedElement={inspectedElement}
+          onInspectedElementChange={setInspectedElement}
         />
       </div>
 
@@ -689,14 +677,6 @@ export default function Home() {
           initialName={customElementName}
           onSave={handleSaveCustomElement}
           onCancel={handleCancelCustomElement}
-        />
-      )}
-
-      {inspectedElement && (
-        <ElementInspector
-          element={inspectedElement}
-          allElements={allElements}
-          onClose={handleCloseInspector}
         />
       )}
 

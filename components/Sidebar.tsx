@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Element, SystemType, SYSTEM_NAMES, SYSTEM_COLORS } from '@/lib/types';
 import { SidebarElement } from './SidebarElement';
+import { ElementInspector } from './ElementInspector';
 
 interface SidebarProps {
   allElements: Element[];
@@ -11,6 +12,8 @@ interface SidebarProps {
   onCreateElement: (name: string) => void;
   selectedSystems: Set<SystemType>;
   onSelectedSystemsChange: (systems: Set<SystemType>) => void;
+  inspectedElement: Element | null;
+  onInspectedElementChange: (element: Element | null) => void;
 }
 
 // Shuffle array using Fisher-Yates algorithm
@@ -23,7 +26,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, selectedSystems, onSelectedSystemsChange }: SidebarProps) {
+export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, selectedSystems, onSelectedSystemsChange, inspectedElement, onInspectedElementChange }: SidebarProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -74,6 +77,10 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
     // Only shuffle on client after mount to avoid hydration mismatch
     return isMounted ? shuffleArray(filtered) : filtered;
   }, [allElements, selectedSystems, isMounted, searchQuery]);
+
+  const handleHoverElement = (element: Element | null) => {
+    onInspectedElementChange(element);
+  };
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-screen">
@@ -157,11 +164,23 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
         ) : (
           <div className="flex flex-wrap gap-2">
             {filteredElements.map((element) => (
-              <SidebarElement key={element.id} element={element} />
+              <SidebarElement
+                key={element.id}
+                element={element}
+                onHover={handleHoverElement}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {inspectedElement && (
+        <ElementInspector
+          element={inspectedElement}
+          allElements={allElements}
+          onClose={() => onInspectedElementChange(null)}
+        />
+      )}
     </div>
   );
 }
