@@ -134,7 +134,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
   };
 
   return (
-    <div className="sidebar-container w-80 bg-white border-l border-gray-200 flex flex-col h-screen">
+    <div className="sidebar-container w-96 bg-white border-l border-gray-200 flex flex-col h-screen">
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <input
           type="text"
