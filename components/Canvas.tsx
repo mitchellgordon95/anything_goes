@@ -14,6 +14,10 @@ interface CanvasProps {
   onCrystallize: (type: SystemType) => void;
   onRemoveFromCrystallization: (elementId: string) => void;
   onHoverElement: (element: Element | null) => void;
+  crystallizationOutput: Element | null;
+  elementsInLimbo: Set<string>;
+  shouldConsumeInputs: boolean;
+  onConsumeInputsChange: (value: boolean) => void;
 }
 
 export function Canvas({
@@ -24,7 +28,11 @@ export function Canvas({
   crystallizationElements,
   onCrystallize,
   onRemoveFromCrystallization,
-  onHoverElement
+  onHoverElement,
+  crystallizationOutput,
+  elementsInLimbo,
+  shouldConsumeInputs,
+  onConsumeInputsChange
 }: CanvasProps) {
   const { setNodeRef } = useDroppable({
     id: 'canvas',
@@ -45,6 +53,7 @@ export function Canvas({
             isRerollable={canvasEl.element.id === rerollableElementId}
             onReroll={onReroll}
             onHover={onHoverElement}
+            isInLimbo={elementsInLimbo.has(canvasEl.element.id)}
           />
         ))}
 
@@ -61,6 +70,10 @@ export function Canvas({
         elementsInZone={crystallizationElements}
         onCrystallize={onCrystallize}
         onRemoveFromZone={onRemoveFromCrystallization}
+        outputElement={crystallizationOutput}
+        shouldConsumeInputs={shouldConsumeInputs}
+        onConsumeInputsChange={onConsumeInputsChange}
+        onHoverElement={onHoverElement}
       />
     </div>
   );

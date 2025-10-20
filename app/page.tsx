@@ -18,14 +18,17 @@ import {
   loadCanvasElements,
   saveCanvasElements,
   clearCanvasElements,
+  loadConcreteElements,
+  saveConcreteElements,
 } from '@/lib/storage';
 import { Canvas } from '@/components/Canvas';
 import { Sidebar } from '@/components/Sidebar';
 import { CustomElementModal } from '@/components/CustomElementModal';
-import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName } from '@/lib/types';
+import { SYSTEM_NAMES, SYSTEM_COLORS, getSystemTypeFromName, ABSTRACT_SYSTEMS } from '@/lib/types';
 
 export default function Home() {
-  const [discoveries, setDiscoveries] = useState<Element[]>([]);
+  const [discoveries, setDiscoveries] = useState<Element[]>([]); // Abstract combinations only
+  const [concreteElements, setConcreteElements] = useState<Element[]>([]); // Crystallized elements
   const [canvasElements, setCanvasElements] = useState<CanvasElementType[]>([]);
   const [allElements, setAllElements] = useState<Element[]>(BASE_ELEMENTS);
   const [activeElement, setActiveElement] = useState<Element | null>(null);
@@ -34,10 +37,13 @@ export default function Home() {
   const [rerollableElementId, setRerollableElementId] = useState<string | null>(null);
   const [rejectedNames, setRejectedNames] = useState<string[]>([]);
   const [crystallizationElements, setCrystallizationElements] = useState<Element[]>([]);
+  const [crystallizationOutput, setCrystallizationOutput] = useState<Element | null>(null);
+  const [elementsInLimbo, setElementsInLimbo] = useState<Set<string>>(new Set());
+  const [shouldConsumeInputs, setShouldConsumeInputs] = useState(false);
   const [customElementName, setCustomElementName] = useState<string | null>(null);
   const [inspectedElement, setInspectedElement] = useState<Element | null>(null);
   const [selectedSystems, setSelectedSystems] = useState<Set<SystemType>>(
-    new Set(Object.keys(SYSTEM_NAMES) as SystemType[])
+    new Set(ABSTRACT_SYSTEMS)
   );
 
   const sensors = useSensors(
@@ -51,12 +57,19 @@ export default function Home() {
   // Load saved data on mount and set mounted state
   useEffect(() => {
     const savedDiscoveries = loadDiscoveries();
+    const savedConcrete = loadConcreteElements();
     const savedCanvas = loadCanvasElements();
     setDiscoveries(savedDiscoveries);
+    setConcreteElements(savedConcrete);
     setCanvasElements(savedCanvas);
-    setAllElements([...BASE_ELEMENTS, ...savedDiscoveries]);
+    setAllElements([...BASE_ELEMENTS, ...savedDiscoveries, ...savedConcrete]);
     setIsMounted(true);
   }, []);
+
+  // Clear crystallization output when inputs change
+  useEffect(() => {
+    setCrystallizationOutput(null);
+  }, [crystallizationElements]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -94,6 +107,51 @@ export default function Home() {
       return;
     }
 
+    // Case: Dragging from crystallization output to canvas
+    if (activeData?.source === 'crystallization-output' && over?.id === 'canvas') {
+      const outputElement = activeData.element;
+
+      // Get canvas container to calculate relative position
+      const canvasEl = document.querySelector('[data-canvas]');
+      if (!canvasEl) {
+        console.error('Canvas element not found');
+        return;
+      }
+
+      const rect = canvasEl.getBoundingClientRect();
+      const dropPosition = {
+        x: Math.max(0, active.rect.current.translated?.left || 0) - rect.left,
+        y: Math.max(0, active.rect.current.translated?.top || 0) - rect.top,
+      };
+
+      console.log('Committing crystallization output to canvas:', outputElement.name, 'consume:', shouldConsumeInputs);
+
+      let updatedCanvas = [...canvasElements];
+
+      if (shouldConsumeInputs) {
+        // Remove all input elements from canvas
+        const inputIds = new Set(crystallizationElements.map((e) => e.id));
+        updatedCanvas = canvasElements.filter((ce) => !inputIds.has(ce.element.id));
+      }
+
+      // Add output element to canvas
+      updatedCanvas.push({
+        element: outputElement,
+        position: dropPosition,
+      });
+
+      setCanvasElements(updatedCanvas);
+      saveCanvasElements(updatedCanvas);
+
+      // Clear crystallization state
+      setCrystallizationElements([]);
+      setCrystallizationOutput(null);
+      setElementsInLimbo(new Set());
+      setShouldConsumeInputs(false);
+
+      return;
+    }
+
     // Case: Dragging to crystallization zone
     if (over?.id === 'crystallization-zone') {
       const element = activeData?.element;
@@ -104,17 +162,15 @@ export default function Home() {
         );
 
         if (!alreadyInZone) {
-          // If from canvas, remove from canvas
-          if (activeData?.source === 'canvas') {
-            const updatedCanvas = canvasElements.filter(
-              (ce) => ce.element.id !== element.id
-            );
-            setCanvasElements(updatedCanvas);
-            saveCanvasElements(updatedCanvas);
-          }
-
+          // Don't remove from canvas - instead add to limbo
           // Add to crystallization zone
           setCrystallizationElements([...crystallizationElements, element]);
+
+          // Add to limbo (grey out on canvas)
+          setElementsInLimbo(new Set([...elementsInLimbo, element.id]));
+
+          // Clear output since inputs changed
+          setCrystallizationOutput(null);
         }
       }
       return;
@@ -196,9 +252,31 @@ export default function Home() {
       }
     }
 
-    // Case 4: Moving a canvas element to a new position
+    // Case 4: Moving a canvas element to a new position (or aborting crystallization)
     if (activeData?.source === 'canvas' && over.id === 'canvas' && !overData?.element) {
       const element = activeData.element;
+
+      // Check if this is an abort gesture (element is in limbo)
+      if (elementsInLimbo.has(element.id)) {
+        console.log('Aborting crystallization for:', element.name);
+
+        // Remove from crystallization zone
+        setCrystallizationElements(
+          crystallizationElements.filter((e) => e.id !== element.id)
+        );
+
+        // Remove from limbo
+        const newLimbo = new Set(elementsInLimbo);
+        newLimbo.delete(element.id);
+        setElementsInLimbo(newLimbo);
+
+        // Clear output if no elements left in crystallization
+        if (crystallizationElements.length === 1) {
+          setCrystallizationOutput(null);
+        }
+
+        return;
+      }
 
       // Get canvas container to calculate relative position
       const canvasEl = document.querySelector('[data-canvas]');
@@ -414,9 +492,18 @@ export default function Home() {
   };
 
   const handleRemoveFromCrystallization = (elementId: string) => {
-    setCrystallizationElements(
-      crystallizationElements.filter((e) => e.id !== elementId)
-    );
+    const updatedElements = crystallizationElements.filter((e) => e.id !== elementId);
+    setCrystallizationElements(updatedElements);
+
+    // Remove from limbo
+    const newLimbo = new Set(elementsInLimbo);
+    newLimbo.delete(elementId);
+    setElementsInLimbo(newLimbo);
+
+    // Clear output if no elements left
+    if (updatedElements.length === 0) {
+      setCrystallizationOutput(null);
+    }
   };
 
   const handleCrystallize = async (type: SystemType) => {
@@ -437,6 +524,7 @@ export default function Home() {
             description: e.description,
           })),
           type,
+          consumeInputs: shouldConsumeInputs,
         }),
       });
 
@@ -452,28 +540,17 @@ export default function Home() {
           discoveredAt: new Date().toISOString(),
         };
 
-        // Add to discoveries
-        const updatedDiscoveries = [...discoveries, crystallizedElement];
-        setDiscoveries(updatedDiscoveries);
-        setAllElements([...BASE_ELEMENTS, ...updatedDiscoveries]);
-        saveDiscoveries(updatedDiscoveries);
+        // Add to concrete elements (not discoveries!)
+        const updatedConcrete = [...concreteElements, crystallizedElement];
+        setConcreteElements(updatedConcrete);
+        setAllElements([...BASE_ELEMENTS, ...discoveries, ...updatedConcrete]);
+        saveConcreteElements(updatedConcrete);
 
-        // Add to canvas at center
-        const canvasEl = document.querySelector('[data-canvas]');
-        if (canvasEl) {
-          const rect = canvasEl.getBoundingClientRect();
-          const newCanvasElement: CanvasElementType = {
-            element: crystallizedElement,
-            position: { x: rect.width / 2 - 50, y: rect.height / 2 - 20 },
-          };
+        // Set as output (don't add to canvas automatically)
+        setCrystallizationOutput(crystallizedElement);
 
-          const updatedCanvas = [...canvasElements, newCanvasElement];
-          setCanvasElements(updatedCanvas);
-          saveCanvasElements(updatedCanvas);
-        }
-
-        // Clear crystallization zone
-        setCrystallizationElements([]);
+        // Don't clear crystallization zone - let user keep inputs
+        // setCrystallizationElements([]);
       }
     } catch (error) {
       console.error('Failed to crystallize:', error);
@@ -485,6 +562,12 @@ export default function Home() {
   const handleClearCanvas = () => {
     setCanvasElements([]);
     clearCanvasElements();
+
+    // Also clear crystallization state
+    setCrystallizationElements([]);
+    setCrystallizationOutput(null);
+    setElementsInLimbo(new Set());
+    setShouldConsumeInputs(false);
   };
 
   const handleResetDiscoveries = () => {
@@ -589,6 +672,10 @@ export default function Home() {
               onCrystallize={handleCrystallize}
               onRemoveFromCrystallization={handleRemoveFromCrystallization}
               onHoverElement={handleHoverElement}
+              crystallizationOutput={crystallizationOutput}
+              elementsInLimbo={elementsInLimbo}
+              shouldConsumeInputs={shouldConsumeInputs}
+              onConsumeInputsChange={setShouldConsumeInputs}
             />
           </div>
         </div>
@@ -602,6 +689,7 @@ export default function Home() {
           onSelectedSystemsChange={setSelectedSystems}
           inspectedElement={inspectedElement}
           onInspectedElementChange={setInspectedElement}
+          elementsInLimbo={elementsInLimbo}
         />
 
         {customElementName && (
@@ -649,6 +737,10 @@ export default function Home() {
               onCrystallize={handleCrystallize}
               onRemoveFromCrystallization={handleRemoveFromCrystallization}
               onHoverElement={handleHoverElement}
+              crystallizationOutput={crystallizationOutput}
+              elementsInLimbo={elementsInLimbo}
+              shouldConsumeInputs={shouldConsumeInputs}
+              onConsumeInputsChange={setShouldConsumeInputs}
             />
           </div>
 
@@ -659,7 +751,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Right Sidebar */}
+        {/* Sidebar */}
         <Sidebar
           allElements={allElements}
           discoveries={discoveries}
@@ -669,6 +761,7 @@ export default function Home() {
           onSelectedSystemsChange={setSelectedSystems}
           inspectedElement={inspectedElement}
           onInspectedElementChange={setInspectedElement}
+          elementsInLimbo={elementsInLimbo}
         />
       </div>
 

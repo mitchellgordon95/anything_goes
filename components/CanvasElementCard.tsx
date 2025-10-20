@@ -10,6 +10,7 @@ interface CanvasElementCardProps {
   isRerollable: boolean;
   onReroll: (elementId: string) => void;
   onHover: (element: Element | null) => void;
+  isInLimbo: boolean;
 }
 
 export function CanvasElementCard({
@@ -18,6 +19,7 @@ export function CanvasElementCard({
   isRerollable,
   onReroll,
   onHover,
+  isInLimbo,
 }: CanvasElementCardProps) {
   const { element, position } = canvasElement;
 
@@ -29,6 +31,7 @@ export function CanvasElementCard({
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `droppable-${element.id}`,
     data: { element },
+    disabled: isInLimbo, // Can't drop on limbo elements
   });
 
   const style = {
@@ -56,6 +59,7 @@ export function CanvasElementCard({
         px-4 py-2 rounded-lg border-2 bg-white shadow-md cursor-grab
         transition-all select-none relative
         ${isOver ? 'ring-4 ring-opacity-50 scale-105' : ''}
+        ${isInLimbo ? 'opacity-50 ring-2 ring-purple-300' : ''}
       `}
     >
       {isRerollable && (

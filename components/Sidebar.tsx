@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Element, SystemType, SYSTEM_NAMES, SYSTEM_COLORS } from '@/lib/types';
+import { Element, SystemType, SYSTEM_NAMES, SYSTEM_COLORS, isAbstractSystem } from '@/lib/types';
 import { SidebarElement } from './SidebarElement';
 import { ElementInspector } from './ElementInspector';
 
@@ -14,6 +14,7 @@ interface SidebarProps {
   onSelectedSystemsChange: (systems: Set<SystemType>) => void;
   inspectedElement: Element | null;
   onInspectedElementChange: (element: Element | null) => void;
+  elementsInLimbo: Set<string>;
 }
 
 // Shuffle array using Fisher-Yates algorithm
@@ -26,16 +27,21 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, selectedSystems, onSelectedSystemsChange, inspectedElement, onInspectedElementChange }: SidebarProps) {
+export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, selectedSystems, onSelectedSystemsChange, inspectedElement, onInspectedElementChange, elementsInLimbo }: SidebarProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [inspectorHeight, setInspectorHeight] = useState(300); // Default height in pixels
+  const [inspectorHeight, setInspectorHeight] = useState<number | null>(null); // null = auto-fit, number = manual size
   const [isResizing, setIsResizing] = useState(false);
 
   // Only shuffle after client-side hydration to avoid mismatch
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Reset to auto-fit height when inspected element changes
+  useEffect(() => {
+    setInspectorHeight(null);
+  }, [inspectedElement]);
 
   // Handle resize
   useEffect(() => {
@@ -58,6 +64,14 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
       setIsResizing(false);
     };
 
+    // Capture initial height if starting from auto
+    if (inspectorHeight === null) {
+      const inspector = document.querySelector('.sidebar-container > div:last-child');
+      if (inspector) {
+        setInspectorHeight(inspector.getBoundingClientRect().height);
+      }
+    }
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
@@ -65,7 +79,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing]);
+  }, [isResizing, inspectorHeight]);
 
   const toggleSystem = (system: SystemType) => {
     const newSelected = new Set(selectedSystems);
@@ -77,14 +91,19 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
     onSelectedSystemsChange(newSelected);
   };
 
-  // Get only systems that have elements
+  // Filter to only abstract elements
+  const abstractElements = useMemo(() => {
+    return allElements.filter((el) => isAbstractSystem(el.system));
+  }, [allElements]);
+
+  // Get only abstract systems that have elements
   const availableSystems = useMemo(() => {
     const systems = new Set<SystemType>();
-    allElements.forEach((el) => systems.add(el.system));
+    abstractElements.forEach((el) => systems.add(el.system));
     return Array.from(systems).sort((a, b) =>
       SYSTEM_NAMES[a].localeCompare(SYSTEM_NAMES[b])
     );
-  }, [allElements]);
+  }, [abstractElements]);
 
   const toggleAll = () => {
     if (selectedSystems.size === availableSystems.length) {
@@ -97,7 +116,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
   };
 
   const filteredElements = useMemo(() => {
-    let filtered = allElements.filter((el) => selectedSystems.has(el.system));
+    let filtered = abstractElements.filter((el) => selectedSystems.has(el.system));
 
     // Apply search filter
     if (searchQuery.trim()) {
@@ -108,7 +127,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
 
     // Only shuffle on client after mount to avoid hydration mismatch
     return isMounted ? shuffleArray(filtered) : filtered;
-  }, [allElements, selectedSystems, isMounted, searchQuery]);
+  }, [abstractElements, selectedSystems, isMounted, searchQuery]);
 
   const handleHoverElement = (element: Element | null) => {
     onInspectedElementChange(element);
@@ -117,8 +136,6 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
   return (
     <div className="sidebar-container w-80 bg-white border-l border-gray-200 flex flex-col h-screen">
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <h2 className="text-xl font-semibold text-gray-800 mb-3">Elements</h2>
-
         <input
           type="text"
           placeholder="Search or create elements..."
@@ -200,6 +217,7 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
                 key={element.id}
                 element={element}
                 onHover={handleHoverElement}
+                isInLimbo={elementsInLimbo.has(element.id)}
               />
             ))}
           </div>
@@ -214,9 +232,13 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
             className="h-1 bg-gray-200 hover:bg-purple-400 cursor-ns-resize transition-colors flex-shrink-0"
           />
 
-          {/* Inspector with fixed height */}
+          {/* Inspector with auto or fixed height */}
           <div
-            style={{ height: `${inspectorHeight}px` }}
+            style={
+              inspectorHeight === null
+                ? { maxHeight: '80vh' }
+                : { height: `${inspectorHeight}px` }
+            }
             className="flex-shrink-0 overflow-y-auto"
           >
             <ElementInspector

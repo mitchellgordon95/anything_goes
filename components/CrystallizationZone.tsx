@@ -1,13 +1,16 @@
 'use client';
 
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { Element, SystemType, SYSTEM_COLORS, SYSTEM_NAMES } from '@/lib/types';
-import { useState } from 'react';
 
 interface CrystallizationZoneProps {
   elementsInZone: Element[];
   onCrystallize: (type: SystemType) => void;
   onRemoveFromZone: (elementId: string) => void;
+  outputElement: Element | null;
+  shouldConsumeInputs: boolean;
+  onConsumeInputsChange: (value: boolean) => void;
+  onHoverElement: (element: Element | null) => void;
 }
 
 const CONCRETE_TYPES: SystemType[] = [
@@ -21,110 +24,155 @@ const CONCRETE_TYPES: SystemType[] = [
   'theme',
 ];
 
+// Draggable output element component
+function OutputElement({
+  outputElement,
+  onHover
+}: {
+  outputElement: Element;
+  onHover: (element: Element | null) => void;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `crystallization-output-${outputElement.id}`,
+    data: { element: outputElement, source: 'crystallization-output' },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={{
+        borderColor: SYSTEM_COLORS[outputElement.system],
+        opacity: isDragging ? 0.5 : 1,
+      }}
+      title={outputElement.description}
+      onMouseEnter={() => onHover(outputElement)}
+      className="px-2 py-1 rounded border-2 bg-white shadow-sm cursor-grab hover:shadow-md transition-all"
+    >
+      <div className="font-medium text-gray-900 text-xs mb-0.5">
+        {outputElement.name}
+      </div>
+      <div className="text-xs text-gray-500">
+        {SYSTEM_NAMES[outputElement.system]}
+      </div>
+      <div className="text-xs text-purple-600 mt-1 italic">
+        Drag to canvas →
+      </div>
+    </div>
+  );
+}
+
 export function CrystallizationZone({
   elementsInZone,
   onCrystallize,
   onRemoveFromZone,
+  outputElement,
+  shouldConsumeInputs,
+  onConsumeInputsChange,
+  onHoverElement,
 }: CrystallizationZoneProps) {
-  const [showTypeSelector, setShowTypeSelector] = useState(false);
-
   const { setNodeRef, isOver } = useDroppable({
     id: 'crystallization-zone',
   });
 
   const canCrystallize = elementsInZone.length >= 1;
 
-  const handleCrystallizeClick = () => {
-    setShowTypeSelector(true);
-  };
-
-  const handleTypeSelect = (type: SystemType) => {
-    onCrystallize(type);
-    setShowTypeSelector(false);
-  };
-
   return (
-    <div className="border-t-2 border-purple-300 bg-purple-50 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-purple-900">
-          Crystallization Zone
-        </h3>
-        {canCrystallize && (
-          <button
-            onClick={handleCrystallizeClick}
-            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg font-medium transition-colors"
+    <div className="border-t-2 border-purple-300 bg-purple-50 p-2">
+      <div className="flex items-center gap-3">
+        {/* Left: Inputs */}
+        <div className="flex-1">
+          <div className="text-xs font-medium text-purple-700 mb-1">Inputs</div>
+          <div
+            ref={setNodeRef}
+            className={`
+              min-h-16 border-2 border-dashed rounded-lg p-2
+              transition-all
+              ${isOver ? 'border-purple-600 bg-purple-100' : 'border-purple-300 bg-white'}
+            `}
           >
-            Crystallize →
-          </button>
-        )}
-      </div>
-
-      <div
-        ref={setNodeRef}
-        className={`
-          min-h-24 border-2 border-dashed rounded-lg p-3
-          transition-all
-          ${isOver ? 'border-purple-600 bg-purple-100' : 'border-purple-300 bg-white'}
-        `}
-      >
-        {elementsInZone.length === 0 ? (
-          <div className="text-center text-purple-400 text-sm py-4">
-            Drag 1+ elements here to crystallize into a concrete story element
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {elementsInZone.map((element) => (
-              <div
-                key={element.id}
-                style={{ borderColor: SYSTEM_COLORS[element.system] }}
-                title={element.description}
-                className="px-3 py-1 rounded-lg border-2 bg-white shadow-sm flex items-center gap-2"
-              >
-                <span className="font-medium text-gray-900 text-xs">
-                  {element.name}
-                </span>
-                <button
-                  onClick={() => onRemoveFromZone(element.id)}
-                  className="text-gray-400 hover:text-red-600 text-xs"
-                >
-                  ✕
-                </button>
+            {elementsInZone.length === 0 ? (
+              <div className="text-center text-purple-400 text-xs py-2">
+                Drag elements here
               </div>
-            ))}
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {elementsInZone.map((element) => (
+                  <div
+                    key={element.id}
+                    style={{ borderColor: SYSTEM_COLORS[element.system] }}
+                    title={element.description}
+                    className="px-2 py-1 rounded border-2 bg-white shadow-sm flex items-center gap-1"
+                  >
+                    <span className="font-medium text-gray-900 text-xs">
+                      {element.name}
+                    </span>
+                    <button
+                      onClick={() => onRemoveFromZone(element.id)}
+                      className="text-gray-400 hover:text-red-600 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Type Selector Modal */}
-      {showTypeSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Choose Concrete Type
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              What type of story element should this become?
-            </p>
-            <div className="grid grid-cols-2 gap-2 mb-4">
+        {/* Middle: Buttons + Arrow */}
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1">
+            <div className="text-xs font-medium text-purple-700 text-center mb-0.5">Create</div>
+            <div className="grid grid-cols-4 gap-1">
               {CONCRETE_TYPES.map((type) => (
                 <button
                   key={type}
-                  onClick={() => handleTypeSelect(type)}
-                  className="px-4 py-3 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-lg font-medium transition-colors text-sm"
+                  onClick={() => canCrystallize && onCrystallize(type)}
+                  disabled={!canCrystallize}
+                  className={`
+                    px-2 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap
+                    ${canCrystallize
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }
+                  `}
+                  title={SYSTEM_NAMES[type]}
                 >
                   {SYSTEM_NAMES[type]}
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => setShowTypeSelector(false)}
-              className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors text-sm"
-            >
-              Cancel
-            </button>
+          </div>
+          <div className="text-purple-600 text-xl font-bold">→</div>
+        </div>
+
+        {/* Right: Output + Consume Checkbox */}
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-xs font-medium text-purple-700">Output</div>
+            <label className="flex items-center gap-1 text-xs text-purple-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={shouldConsumeInputs}
+                onChange={(e) => onConsumeInputsChange(e.target.checked)}
+                className="cursor-pointer"
+              />
+              Consume inputs
+            </label>
+          </div>
+          <div className="min-h-16 border-2 border-dashed border-purple-300 bg-white rounded-lg p-2">
+            {outputElement ? (
+              <OutputElement outputElement={outputElement} onHover={onHoverElement} />
+            ) : (
+              <div className="text-center text-purple-400 text-xs py-2">
+                No output yet
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -11,12 +11,13 @@ interface CrystallizeElement {
 interface CrystallizeRequest {
   elements: CrystallizeElement[];
   type: string; // Character, Location, Scene, Beat, Object, Relationship, Event, Theme
+  consumeInputs?: boolean;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: CrystallizeRequest = await req.json();
-    const { elements, type } = body;
+    const { elements, type, consumeInputs = false } = body;
 
     if (!elements || elements.length < 1) {
       return NextResponse.json(
@@ -37,9 +38,15 @@ export async function POST(req: NextRequest) {
       .map((el, idx) => `Element ${idx + 1}: "${el.name}" (${el.system})${el.description ? ` - ${el.description}` : ''}`)
       .join('\n');
 
+    const consumeContext = consumeInputs
+      ? 'The user is REPLACING/UPDATING the input elements with this new version. If any of the inputs are already concrete elements (e.g., existing characters), consider whether to evolve them or create something new based on context.'
+      : 'The user is KEEPING the input elements and creating something new alongside them. Create a distinct, new element.';
+
     const prompt = `Crystallize these ${elements.length} story elements into a concrete ${type}:
 
 ${elementsList}
+
+Context: ${consumeContext}
 
 Create a specific, concrete ${type} that combines and embodies ALL the traits, qualities, and essences from these ${elements.length} elements. This should be a fully-realized, specific instance - not an abstract concept.
 

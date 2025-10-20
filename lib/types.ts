@@ -82,3 +82,35 @@ export function getSystemTypeFromName(name: string): SystemType | undefined {
   );
   return entry ? (entry[0] as SystemType) : undefined;
 }
+
+// Abstract systems (can be combined)
+export const ABSTRACT_SYSTEMS: SystemType[] = [
+  'emotions',
+  'story-particles',
+  'characteristics',
+  'tropes',
+  'sensory',
+  'momentum',
+];
+
+// Concrete systems (result of crystallization)
+const CONCRETE_SYSTEMS: SystemType[] = [
+  'character',
+  'location',
+  'scene',
+  'beat',
+  'object',
+  'relationship',
+  'event',
+  'theme',
+];
+
+// Helper to check if a system is abstract
+export function isAbstractSystem(system: SystemType): boolean {
+  return ABSTRACT_SYSTEMS.includes(system);
+}
+
+// Helper to check if a system is concrete
+export function isConcreteSystem(system: SystemType): boolean {
+  return CONCRETE_SYSTEMS.includes(system);
+}

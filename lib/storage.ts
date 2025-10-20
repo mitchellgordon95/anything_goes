@@ -2,6 +2,7 @@ import { Element, CanvasElement } from './types';
 
 const STORAGE_KEY = 'anything-goes-discoveries';
 const CANVAS_STORAGE_KEY = 'anything-goes-canvas';
+const CONCRETE_STORAGE_KEY = 'anything-goes-concrete';
 
 export function saveDiscoveries(elements: Element[]): void {
   if (typeof window === 'undefined') return;
@@ -58,5 +59,34 @@ export function clearCanvasElements(): void {
     localStorage.removeItem(CANVAS_STORAGE_KEY);
   } catch (error) {
     console.error('Failed to clear canvas elements:', error);
+  }
+}
+
+export function saveConcreteElements(elements: Element[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CONCRETE_STORAGE_KEY, JSON.stringify(elements));
+  } catch (error) {
+    console.error('Failed to save concrete elements:', error);
+  }
+}
+
+export function loadConcreteElements(): Element[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(CONCRETE_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Failed to load concrete elements:', error);
+    return [];
+  }
+}
+
+export function clearConcreteElements(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(CONCRETE_STORAGE_KEY);
+  } catch (error) {
+    console.error('Failed to clear concrete elements:', error);
   }
 }
