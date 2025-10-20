@@ -29,11 +29,43 @@ function shuffleArray<T>(array: T[]): T[] {
 export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreateElement, selectedSystems, onSelectedSystemsChange, inspectedElement, onInspectedElementChange }: SidebarProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [inspectorHeight, setInspectorHeight] = useState(300); // Default height in pixels
+  const [isResizing, setIsResizing] = useState(false);
 
   // Only shuffle after client-side hydration to avoid mismatch
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Handle resize
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const sidebar = document.querySelector('.sidebar-container');
+      if (!sidebar) return;
+
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const newHeight = sidebarRect.bottom - e.clientY;
+
+      // Min 150px, max 80% of sidebar height
+      const minHeight = 150;
+      const maxHeight = sidebarRect.height * 0.8;
+      setInspectorHeight(Math.min(Math.max(newHeight, minHeight), maxHeight));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   const toggleSystem = (system: SystemType) => {
     const newSelected = new Set(selectedSystems);
@@ -83,8 +115,8 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
   };
 
   return (
-    <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-screen">
-      <div className="p-4 border-b border-gray-200">
+    <div className="sidebar-container w-80 bg-white border-l border-gray-200 flex flex-col h-screen">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <h2 className="text-xl font-semibold text-gray-800 mb-3">Elements</h2>
 
         <input
@@ -175,11 +207,25 @@ export function Sidebar({ allElements, discoveries, onResetDiscoveries, onCreate
       </div>
 
       {inspectedElement && (
-        <ElementInspector
-          element={inspectedElement}
-          allElements={allElements}
-          onClose={() => onInspectedElementChange(null)}
-        />
+        <>
+          {/* Resize bar */}
+          <div
+            onMouseDown={() => setIsResizing(true)}
+            className="h-1 bg-gray-200 hover:bg-purple-400 cursor-ns-resize transition-colors flex-shrink-0"
+          />
+
+          {/* Inspector with fixed height */}
+          <div
+            style={{ height: `${inspectorHeight}px` }}
+            className="flex-shrink-0 overflow-y-auto"
+          >
+            <ElementInspector
+              element={inspectedElement}
+              allElements={allElements}
+              onClose={() => onInspectedElementChange(null)}
+            />
+          </div>
+        </>
       )}
     </div>
   );

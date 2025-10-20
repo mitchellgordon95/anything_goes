@@ -17,7 +17,7 @@ export function ElementInspector({ element, allElements, onClose }: ElementInspe
     : [];
 
   return (
-    <div className="border-t-2 border-gray-200 bg-white p-4">
+    <div className="bg-white p-4">
       {/* Header with name and close button */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
